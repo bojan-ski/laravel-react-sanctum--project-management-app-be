@@ -7,7 +7,7 @@ use Illuminate\Http\JsonResponse;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\CreateUserRequest;
 use App\Services\UserService;
-use App\ApiResponse;
+use App\Traits\ApiResponse;
 
 class UserController extends Controller
 {
