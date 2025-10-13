@@ -2,13 +2,19 @@
 
 namespace App\Http\Controllers\Admin;
 
+use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\CreateUserRequest;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
+use App\Services\UserService;
+use App\ApiResponse;
 
 class UserController extends Controller
 {
+    use ApiResponse;
+
+    public function __construct(private UserService $userService) {}
+
     /**
      * Display a listing of the resource.
      */
@@ -20,9 +26,15 @@ class UserController extends Controller
     /**
      * Show the form for creating a new resource.
      */
-    public function create(CreateUserRequest $request)
+    public function create(CreateUserRequest $request): JsonResponse
     {
-        $formData = $request->validated();
+        $user = $this->userService->createUser($request->validated());
+
+        if ($user) {
+            return $this->success($user, 'New user created', 201);
+        }
+
+        return $this->error('New user create error!', 500);
     }
 
     /**
