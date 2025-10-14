@@ -26,7 +26,6 @@ class AuthController extends Controller
             return $this->error('Invalid login details!', 401);
         }
 
-        // return $request->json($user);
         return $this->success($user, 'Login successful');
     }
 

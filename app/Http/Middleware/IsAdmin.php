@@ -5,7 +5,7 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
-use App\ApiResponse;
+use App\Traits\ApiResponse;
 
 class IsAdmin
 {
@@ -18,7 +18,7 @@ class IsAdmin
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if ($request->user() || !$request->user()->isAdmin()) {
+        if ($request->user() || $request->user()->role !== 'admin') {
             return $this->error('Unauthorized', 403);
         }
 
