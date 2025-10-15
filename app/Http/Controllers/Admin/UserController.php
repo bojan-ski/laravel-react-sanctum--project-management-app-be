@@ -26,7 +26,7 @@ class UserController extends Controller
     /**
      * Show the form for creating a new resource.
      */
-    public function create(CreateUserRequest $request): JsonResponse
+    public function store(CreateUserRequest $request): JsonResponse
     {
         $user = $this->userService->createUser($request->validated());
 
@@ -34,15 +34,7 @@ class UserController extends Controller
             return $this->success($user, 'New user created', 201);
         }
 
-        return $this->error('New user create error!', 500);
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
+        return $this->error('Create new user error!', 500);
     }
 
     /**

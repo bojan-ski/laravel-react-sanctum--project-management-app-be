@@ -18,7 +18,7 @@ class IsAdmin
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if ($request->user() || $request->user()->role !== 'admin') {
+        if ($request->user() && $request->user()->role !== 'admin') {
             return $this->error('Unauthorized', 403);
         }
 

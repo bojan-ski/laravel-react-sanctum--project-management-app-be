@@ -21,7 +21,6 @@ class UserService
             'email' => $data['email'],
             'password' => $password,
             // 'password' => Hash::make($data['password']),
-            'is_admin' => false,
         ]);
 
         return $this->sendCredentialsEmail($user, $password);

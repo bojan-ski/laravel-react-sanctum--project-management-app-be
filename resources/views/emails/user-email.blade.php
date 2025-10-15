@@ -39,10 +39,10 @@
         </div>
         
         <p>
-            You can now log in to TaskFlow and start collaborating on projects!
+            You can now log in to Project Management App and start collaborating on projects!
         </p>
         
-        <a href="{{ config('app.frontend_url') }}/login" class="button">
+        <a href="{{ config('app.frontend_url') }}" class="button">
             Go to Login Page
         </a>
     </div>
