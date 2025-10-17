@@ -3,12 +3,32 @@
 namespace App\Services;
 
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Hash;
 use App\Mail\UserCredentialsMail;
 use App\Models\User;
 
 class UserService
 {
+    /**
+     * Get paginated list of users (excluding admins and soft deleted)
+     */
+    public function getAllUsers(string | null $search)
+    {
+        return User::query()
+            ->where('role', 'user')
+            ->when(
+                $search,
+                fn($query, $search) =>
+                $query->where(
+                    fn($q) =>
+                    $q->where('name', 'like', "%{$search}%")
+                        ->orWhere('email', 'like', "%{$search}%")
+                )
+            )
+            ->latest()
+            ->paginate(12)
+            ->withQueryString();
+    }
+
     /**
      * Create a new user and send credentials email
      */

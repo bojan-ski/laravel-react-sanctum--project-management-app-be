@@ -18,9 +18,13 @@ class UserController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        //
+        $search = $request->input('search');
+
+        $users = $this->userService->getAllUsers($search);
+
+        return $this->success($users, 'All user retrieved');
     }
 
     /**
