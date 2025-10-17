@@ -5,13 +5,14 @@ namespace App\Services;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\UserCredentialsMail;
 use App\Models\User;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class UserService
 {
     /**
-     * Get paginated list of users (excluding admins and soft deleted)
+     * Get paginated list of users - excluding admin
      */
-    public function getAllUsers(string | null $search)
+    public function getAllUsers(string | null $search): LengthAwarePaginator
     {
         return User::query()
             ->where('role', 'user')
@@ -25,7 +26,7 @@ class UserService
                 )
             )
             ->latest()
-            ->paginate(12)
+            ->paginate(2)
             ->withQueryString();
     }
 
@@ -61,5 +62,13 @@ class UserService
 
             return null;
         }
+    }
+
+    /**
+     * Delete user
+     */
+    public function deleteUser(User $user): void
+    {
+        $user->delete();
     }
 }
