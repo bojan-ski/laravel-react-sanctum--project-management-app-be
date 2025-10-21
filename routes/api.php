@@ -15,6 +15,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::middleware(IsRegularUserMiddleware::class)->group(function () {
         Route::put('/profile/change_password', [ProfileController::class, 'changePassword']);
+        Route::delete('/profile', [ProfileController::class, 'deleteAccount']);
     });
 });
 

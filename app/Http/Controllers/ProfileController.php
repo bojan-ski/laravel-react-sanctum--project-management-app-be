@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use App\Http\Requests\Profile\ChangePasswordRequest;
+use App\Http\Requests\Profile\DeleteAccountRequest;
 use App\Services\ProfileService;
 use App\Traits\ApiResponse;
 
@@ -30,5 +31,23 @@ class ProfileController extends Controller
         }
 
         return $this->success(null, 'Password changed successfully');
+    }
+
+    /**
+     * Delete user account
+     */
+    public function deleteAccount(DeleteAccountRequest $request): JsonResponse
+    {
+        $response = $this->profileService->deleteAccount(
+            $request,
+            $request->user(),
+            $request->password
+        );
+
+        if (!$response) {
+            return $this->error('Password incorrect!', 400);
+        }
+
+        return $this->success(null, 'Your account has been deleted');
     }
 }
