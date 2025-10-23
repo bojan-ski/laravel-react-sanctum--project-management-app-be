@@ -11,8 +11,12 @@ class ProjectMember extends Pivot
     protected $table = 'project_members';
     protected $fillable = [
         'project_id',
-        'user_id',
+        'member_id',
         'joined_at',
+    ];
+
+    protected $casts = [
+        'joined_at' => 'date',
     ];
 
     // relation to a project

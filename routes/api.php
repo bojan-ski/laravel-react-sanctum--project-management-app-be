@@ -7,6 +7,7 @@ use App\Http\Middleware\IsRegularUserMiddleware;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ProjectController;
 
 Route::post('/login', [AuthController::class, 'login']);
 
@@ -14,6 +15,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
 
     Route::middleware(IsRegularUserMiddleware::class)->group(function () {
+        Route::post('/projects', [ProjectController::class, 'store']);
+
         Route::put('/profile/change_password', [ProfileController::class, 'changePassword']);
         Route::delete('/profile', [ProfileController::class, 'deleteAccount']);
     });

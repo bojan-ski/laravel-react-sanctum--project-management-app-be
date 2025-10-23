@@ -3,9 +3,10 @@
 namespace App\Services;
 
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Log;
 use App\Mail\UserCredentialsMail;
 use App\Models\User;
-use Illuminate\Pagination\LengthAwarePaginator;
 
 class UserService
 {
@@ -57,7 +58,9 @@ class UserService
             // Mail::to($user->email)->queue(new UserCredentialsMail($user, $password));
 
             return $user;
-        } catch (\Exception $e) {
+        } catch (\Throwable $th) {
+            Log::error('Project creation failed', ['error' => $th->getMessage()]);
+
             $user->delete();
 
             return null;

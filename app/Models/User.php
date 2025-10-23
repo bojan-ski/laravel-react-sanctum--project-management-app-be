@@ -60,6 +60,6 @@ class User extends Authenticatable
     // projects user is a member of and owns
     public function projects(): BelongsToMany
     {
-        return $this->belongsToMany(Project::class, 'project_members');
+        return $this->belongsToMany(Project::class, 'project_members', 'member_id', 'project_id');
     }
 }
