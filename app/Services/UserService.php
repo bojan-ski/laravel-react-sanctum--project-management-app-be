@@ -27,8 +27,7 @@ class UserService
                 )
             )
             ->latest()
-            ->paginate(2)
-            ->withQueryString();
+            ->paginate(2);
     }
 
     /**

@@ -11,16 +11,38 @@ use App\Models\Project;
 
 class ProjectService
 {
-    public function getUserProjects(User $user): LengthAwarePaginator
+    public function getUserProjects(User $user, ?string $ownership = 'all'): LengthAwarePaginator
     {
         $query = Project::query();
 
-        $query->where(function ($q) use ($user) {
-            $q->where('owner_id', $user->id)
-                ->orWhereHas('members', function ($subQ) use ($user) {
-                    $subQ->where('member_id', $user->id);
+        switch ($ownership) {
+            case 'owner':
+                $query->where('owner_id', $user->id);
+                break;
+
+            case 'member':
+                $query->whereHas('members', function ($q) use ($user) {
+                    $q->where('member_id', $user->id);
+                })->where('owner_id', '!=', $user->id);
+                break;
+
+            case 'all':
+            default:
+                $query->where(function ($q) use ($user) {
+                    $q->where('owner_id', $user->id)
+                        ->orWhereHas('members', function ($subQ) use ($user) {
+                            $subQ->where('member_id', $user->id);
+                        });
                 });
-        });
+                break;
+        }
+
+        // $query->where(function ($q) use ($user) {
+        //     $q->where('owner_id', $user->id)
+        //         ->orWhereHas('members', function ($subQ) use ($user) {
+        //             $subQ->where('member_id', $user->id);
+        //         });
+        // });
 
         return $query->with(['owner'])
             ->withCount(['members'])

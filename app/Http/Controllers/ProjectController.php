@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Auth;
+use App\Http\Requests\Project\FilterRequest;
 use App\Http\Requests\Project\ProjectRequest;
 use App\Http\Resources\ProjectCardResource;
 use App\Services\ProjectService;
@@ -19,14 +19,23 @@ class ProjectController extends Controller
     /**
      * Display a listing of user's projects
      */
-    public function index(Request $request): JsonResponse
+    public function index(FilterRequest $request): JsonResponse
     {
-        $projects = $this->projectService->getUserProjects($request->user());
+        // filter options
+        $ownership = $request->input('ownership', $request->validated());
 
+        // get projects
+        $projects = $this->projectService->getUserProjects(
+            $request->user(),
+            $ownership
+        );
+
+        // structure json result
         $projects->setCollection(
             ProjectCardResource::collection($projects)->collection
         );
 
+        // return json
         return $this->success($projects, 'Projects retrieved');
     }
 
@@ -43,7 +52,7 @@ class ProjectController extends Controller
         if (!$response) {
             return $this->error('Failed to create project!', 500);
         }
-        
+
         return $this->success(null, 'Project created', 201);
     }
 }
