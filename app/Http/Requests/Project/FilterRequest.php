@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests\Project;
 
+use App\Enums\ProjectStatus;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class FilterRequest extends FormRequest
 {
@@ -23,6 +25,7 @@ class FilterRequest extends FormRequest
     {
         return [
             'ownership' => 'nullable|string|in:owner,member,all',
+            'status' => ['nullable', 'string', Rule::in(array_merge(ProjectStatus::values(), ['all']))],
         ];
     }
 }

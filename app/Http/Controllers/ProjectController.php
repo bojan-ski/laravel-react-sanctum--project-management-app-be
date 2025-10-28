@@ -23,11 +23,13 @@ class ProjectController extends Controller
     {
         // filter options
         $ownership = $request->input('ownership', $request->validated());
+        $status = $request->input('status');
 
         // get projects
         $projects = $this->projectService->getUserProjects(
             $request->user(),
-            $ownership
+            $ownership,
+            $status
         );
 
         // structure json result
