@@ -4,9 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Support\Facades\Auth;
+use App\Enums\ProjectStatus;
 
 class Project extends Model
 {
@@ -17,11 +16,14 @@ class Project extends Model
         'owner_id',
         'title',
         'description',
+        'status',
         'deadline',
+        'document_path'
     ];
 
     protected $casts = [
         'deadline' => 'date',
+        'status' => ProjectStatus::class
     ];
 
     //  add user id (owner_id) on new project create 

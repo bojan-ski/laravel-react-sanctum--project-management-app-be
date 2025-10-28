@@ -23,8 +23,9 @@ class ProjectRequest extends FormRequest
     {
         return [
             'title' => 'required|string|min:3|max:64',
-            'description' => 'required|string|min:255|max:3000',
+            'description' => 'required|string|min:10|max:3000',
             'deadline' => 'required|date',
+            'document_path' => 'nullable|file|mimes:pdf,doc,docx|max:1024'
         ];
     }
 }

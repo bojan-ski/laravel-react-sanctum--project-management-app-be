@@ -44,15 +44,21 @@ class ProjectController extends Controller
      */
     public function store(ProjectRequest $request): JsonResponse
     {
+        // get file
+        $file = $request->file('document_path');
+
+        // call project service
         $response = $this->projectService->createProject(
             $request->user(),
-            $request->validated()
+            $request->validated(),
+            $file
         );
 
+        // return json
         if (!$response) {
             return $this->error('Failed to create project!', 500);
         }
 
-        return $this->success(null, 'Project created', 201);
+        return $this->success($response, 'Project created', 201);
     }
 }

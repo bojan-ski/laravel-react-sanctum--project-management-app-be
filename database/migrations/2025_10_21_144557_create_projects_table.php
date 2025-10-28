@@ -16,7 +16,9 @@ return new class extends Migration
             $table->foreignId('owner_id')->constrained('users')->onDelete('cascade');
             $table->string('title');
             $table->text('description');
+            $table->enum('status', ["pending", "active", "completed", "closed"])->default('pending');
             $table->date('deadline');
+            $table->string('document_path')->nullable();
             $table->timestamps();
         });
     }

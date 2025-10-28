@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -53,16 +54,23 @@ class ProjectService
     /**
      * create project
      */
-    public function createProject(User $user, array $data): bool
+    public function createProject(User $user, array $formData, ?UploadedFile $file = null): bool
     {
         try {
-            DB::transaction(function () use ($user, $data) {
+            DB::transaction(function () use ($user, $formData, $file) {
+                // if file exists
+                if ($file) {
+                    $filePath = $file->store('documents', 'public');
+                    $formData['document_path'] = $filePath;
+                }
+
                 // create project
                 $project = Project::create([
                     // 'owner_id' => $user->id,
-                    'title' => $data['title'],
-                    'description' => $data['description'],
-                    'deadline' => $data['deadline'],
+                    'title' => $formData['title'],
+                    'description' => $formData['description'],
+                    'deadline' => $formData['deadline'],
+                    'document_path' => $formData['document_path'] ?? null
                 ]);
 
                 // add owner as member
@@ -73,7 +81,9 @@ class ProjectService
 
             return true;
         } catch (\Throwable $th) {
-            Log::error('Project creation failed', ['error' => $th->getMessage()]);
+            Log::error('Project creation failed', [
+                'error' => $th->getMessage()
+            ]);
 
             return false;
         }
