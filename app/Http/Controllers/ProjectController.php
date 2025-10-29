@@ -7,6 +7,7 @@ use Illuminate\Http\JsonResponse;
 use App\Http\Requests\Project\FilterRequest;
 use App\Http\Requests\Project\ProjectRequest;
 use App\Http\Resources\ProjectCardResource;
+use App\Models\Project;
 use App\Services\ProjectService;
 use App\Traits\ApiResponse;
 
@@ -61,6 +62,22 @@ class ProjectController extends Controller
             return $this->error('Failed to create project!', 500);
         }
 
-        return $this->success($response, 'Project created', 201);
+        return $this->success(null, 'Project created', 201);
+    }
+
+    /**
+     * Delete  project
+     */
+    public function destroy(Project $project): JsonResponse
+    {
+        // call project service
+        $response = $this->projectService->deleteProject($project);
+
+        // return json
+        if (!$response) {
+            return $this->error('Delete project error!', 500);
+        }
+
+        return $this->success(null, 'Project deleted');
     }
 }

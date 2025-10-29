@@ -5,6 +5,7 @@ namespace App\Services;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Pagination\LengthAwarePaginator;
 use App\Models\User;
@@ -13,6 +14,9 @@ use App\Enums\ProjectStatus;
 
 class ProjectService
 {
+    /**
+     * get user projects with filter feature
+     */
     public function getUserProjects(
         User $user,
         ?string $ownership = 'all',
@@ -48,6 +52,7 @@ class ProjectService
             $query->where('status', $status);
         }
 
+        // return projects
         return $query->with(['owner'])
             ->withCount(['members'])
             ->latest()
@@ -92,6 +97,30 @@ class ProjectService
             return true;
         } catch (\Throwable $th) {
             Log::error('Project creation failed', [
+                'error' => $th->getMessage()
+            ]);
+
+            return false;
+        }
+    }
+
+    /**
+     * delete project
+     */
+    public function deleteProject(Project $project): bool
+    {
+        try {
+            // if file, delete from storage
+            if ($project->document_path) {
+                Storage::disk('public')->delete($project->document_path);
+            }
+
+            // delete from db 
+            $project->delete();
+
+            return true;
+        } catch (\Throwable $th) {
+            Log::error('Project deletion failed', [
                 'error' => $th->getMessage()
             ]);
 
