@@ -18,7 +18,11 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/projects', [ProjectController::class, 'index']);
         Route::post('/projects', [ProjectController::class, 'store']);
         
-        Route::delete('/projects/{project}', [ProjectController::class, 'destroy']);
+        // add middleware
+        Route::get('/projects/{project}/edit', [ProjectController::class, 'edit']);
+        Route::put('/projects/{project}/update', [ProjectController::class, 'update']);
+        Route::delete('/projects/{project}/delete_file', [ProjectController::class, 'deleteFile']);
+        Route::delete('/projects/{project}/destroy', [ProjectController::class, 'destroy']);
 
         Route::put('/profile/change_password', [ProfileController::class, 'changePassword']);
         Route::delete('/profile', [ProfileController::class, 'deleteAccount']);

@@ -105,6 +105,60 @@ class ProjectService
     }
 
     /**
+     * update project
+     */
+    public function updateProject(
+        Project $project,
+        array $formData,
+        ?UploadedFile $file = null
+    ): ?Project {
+        try {
+            // if file exists
+            if ($file) {
+                // if project contains a file, delete from storage
+                if ($project->document_path) {
+                    Storage::disk('public')->delete($project->document_path);
+                }
+
+                $filePath = $file->store('documents', 'public');
+                $formData['document_path'] = $filePath;
+            }
+
+            $project->update($formData);
+
+            return $project;
+        } catch (\Throwable $th) {
+            Log::error('Project update failed', [
+                'error' => $th->getMessage()
+            ]);
+
+            return null;
+        }
+    }
+
+    /**
+     * delete project document
+     */
+    public function deleteProjectDocument(Project $project): bool
+    {
+        try {
+            // delete from storage
+            Storage::disk('public')->delete($project->document_path);
+
+            // update project 
+            $project->update(['document_path' => null]);
+
+            return true;
+        } catch (\Throwable $th) {
+            Log::error('Project document deletion failed', [
+                'error' => $th->getMessage()
+            ]);
+
+            return false;
+        }
+    }
+
+    /**
      * delete project
      */
     public function deleteProject(Project $project): bool

@@ -18,7 +18,7 @@ class ProjectController extends Controller
     public function __construct(private ProjectService $projectService) {}
 
     /**
-     * Display a listing of user's projects
+     * Display a listing of the resource.
      */
     public function index(FilterRequest $request): JsonResponse
     {
@@ -43,8 +43,9 @@ class ProjectController extends Controller
     }
 
     /**
-     * Store a newly created project
+     * Store a newly created resource in storage.
      */
+    // Run php artisan storage:link to create a symbolic link from public/storage to storage/app/public
     public function store(ProjectRequest $request): JsonResponse
     {
         // get file
@@ -66,7 +67,54 @@ class ProjectController extends Controller
     }
 
     /**
-     * Delete  project
+     * Show the form for editing the specified resource.
+     */
+    public function edit(Project $project): JsonResponse
+    {
+        return $this->success($project, 'Project retrieved');
+    }
+
+    /**
+     * Update the specified resource in storage.
+     */
+    public function update(ProjectRequest $request, Project $project): JsonResponse
+    {
+        // get file
+        $file = $request->hasFile('document_path') ? $request->file('document_path') : null;
+
+        // call project service
+        $updatedProject = $this->projectService->updateProject(
+            $project,
+            $request->validated(),
+            $file
+        );
+
+        // return json
+        if (!$updatedProject) {
+            return $this->error('Failed to update project!', 500);
+        }
+
+        return $this->success($updatedProject, 'Project updated', 201);
+    }
+
+    /**
+     * Remove project document from storage.
+     */
+    public function deleteFile(Project $project): JsonResponse
+    {
+        // call project service
+        $response = $this->projectService->deleteProjectDocument($project);
+
+        // return json
+        if (!$response) {
+            return $this->error('Delete project document error!', 500);
+        }
+
+        return $this->success(null, 'Project document deleted');
+    }
+
+    /**
+     * Remove the specified resource from storage.
      */
     public function destroy(Project $project): JsonResponse
     {
