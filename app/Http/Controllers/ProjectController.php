@@ -98,22 +98,6 @@ class ProjectController extends Controller
     }
 
     /**
-     * Remove project document from storage.
-     */
-    public function deleteFile(Project $project): JsonResponse
-    {
-        // call project service
-        $response = $this->projectService->deleteProjectDocument($project);
-
-        // return json
-        if (!$response) {
-            return $this->error('Delete project document error!', 500);
-        }
-
-        return $this->success(null, 'Project document deleted');
-    }
-
-    /**
      * Remove the specified resource from storage.
      */
     public function destroy(Project $project): JsonResponse

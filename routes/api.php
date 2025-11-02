@@ -6,8 +6,9 @@ use App\Http\Middleware\IsAdminUserMiddleware;
 use App\Http\Middleware\IsRegularUserMiddleware;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Admin\UserController;
-use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\ProfileController;
 
 Route::post('/login', [AuthController::class, 'login']);
 
@@ -21,7 +22,7 @@ Route::middleware('auth:sanctum')->group(function () {
         // add middleware
         Route::get('/projects/{project}/edit', [ProjectController::class, 'edit']);
         Route::put('/projects/{project}/update', [ProjectController::class, 'update']);
-        Route::delete('/projects/{project}/delete_file', [ProjectController::class, 'deleteFile']);
+        Route::delete('/projects/{project}/delete_file', [DocumentController::class, 'deleteFile']);
         Route::delete('/projects/{project}/destroy', [ProjectController::class, 'destroy']);
 
         Route::put('/profile/change_password', [ProfileController::class, 'changePassword']);
