@@ -25,6 +25,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/projects/{project}/delete_file', [DocumentController::class, 'deleteFile']);
         Route::delete('/projects/{project}/destroy', [ProjectController::class, 'destroy']);
 
+        Route::get('/projects/{project}', [ProjectController::class, 'show']);
+
         Route::put('/profile/change_password', [ProfileController::class, 'changePassword']);
         Route::delete('/profile', [ProfileController::class, 'deleteAccount']);
     });

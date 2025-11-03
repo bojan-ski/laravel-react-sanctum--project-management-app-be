@@ -7,8 +7,9 @@ use Illuminate\Http\JsonResponse;
 use App\Http\Requests\Project\FilterRequest;
 use App\Http\Requests\Project\ProjectRequest;
 use App\Http\Resources\ProjectCardResource;
-use App\Models\Project;
+use App\Http\Resources\ProjectResource;
 use App\Services\ProjectService;
+use App\Models\Project;
 use App\Traits\ApiResponse;
 
 class ProjectController extends Controller
@@ -67,11 +68,21 @@ class ProjectController extends Controller
     }
 
     /**
+     * Display the specified resource.
+     */
+    public function show(Project $project): JsonResponse
+    {
+        $project = $this->projectService->getProjectDetails($project);
+
+        return $this->success(new ProjectResource($project), 'Project details retrieved');
+    }
+
+    /**
      * Show the form for editing the specified resource.
      */
     public function edit(Project $project): JsonResponse
     {
-        return $this->success($project, 'Project retrieved');
+        return $this->success($project, 'Project data retrieved');
     }
 
     /**

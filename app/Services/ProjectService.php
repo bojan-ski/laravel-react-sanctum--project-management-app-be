@@ -105,6 +105,17 @@ class ProjectService
     }
 
     /**
+     * get selected project details
+     */
+    public function getProjectDetails(Project $project): Project
+    {
+        return $project->load([
+            'owner',
+            'members',
+        ])->loadCount(['members']);
+    }
+
+    /**
      * update project
      */
     public function updateProject(
