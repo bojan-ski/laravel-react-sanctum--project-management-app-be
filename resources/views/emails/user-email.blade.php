@@ -11,7 +11,9 @@
 <body>
     
     <div>
-        <h1>Welcome to Project Management App</h1>
+        <h1>
+            Welcome to Project Management App
+        </h1>
     </div>
     
     <div>

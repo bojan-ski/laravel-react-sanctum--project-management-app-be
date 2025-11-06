@@ -11,6 +11,7 @@ use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\ProjectMemberController;
 
 // auth routes
 Route::post('/login', [AuthController::class, 'login']);
@@ -32,6 +33,13 @@ Route::middleware('auth:sanctum')->group(function () {
         });
 
         Route::get('/projects/{project}', [ProjectController::class, 'show'])->middleware(IsProjectMemberMiddleware::class);
+
+        // project members routes
+        Route::middleware(IsProjectOwnerMiddleware::class)->prefix('projects/{project}/members')->group(function () {
+            Route::get('/', [ProjectMemberController::class, 'index']);
+            Route::get('/available', [ProjectMemberController::class, 'availableUsers']);
+            Route::post('/invite', [ProjectMemberController::class, 'invite']);
+        });
 
         // profile routes
         Route::put('/profile/change_password', [ProfileController::class, 'changePassword']);

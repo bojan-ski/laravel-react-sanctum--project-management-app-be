@@ -11,7 +11,7 @@ use App\Models\User;
 class UserService
 {
     /**
-     * Get paginated list of users - excluding admin
+     * get paginated list of users - excluding admin
      */
     public function getAllUsers(string | null $search): LengthAwarePaginator
     {
@@ -31,7 +31,7 @@ class UserService
     }
 
     /**
-     * Create a new user and send credentials email
+     * create a new user and send credentials email
      */
     public function createUser(array $data): ?User
     {
@@ -48,13 +48,17 @@ class UserService
     }
 
     /**
-     * Send credentials to newly created user
+     * send credentials to newly created user
      */
     private function sendCredentialsEmail(User $user, string $password)
     {
         try {
-            Mail::to($user->email)->send(new UserCredentialsMail($user, $password));
-            // Mail::to($user->email)->queue(new UserCredentialsMail($user, $password));
+            Mail::to($user->email)->send(
+                new UserCredentialsMail($user, $password)
+            );
+            // Mail::to($user->email)->queue(
+            //     new UserCredentialsMail($user, $password)
+            // );
 
             return $user;
         } catch (\Throwable $th) {
@@ -67,7 +71,7 @@ class UserService
     }
 
     /**
-     * Delete user
+     * delete user
      */
     public function deleteUser(User $user): void
     {

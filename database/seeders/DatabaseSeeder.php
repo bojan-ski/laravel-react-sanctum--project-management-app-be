@@ -25,6 +25,7 @@ class DatabaseSeeder extends Seeder
 
         // create tables with dummy data
         $this->call(AdminUserSeeder::class);
-
+        $this->call(TestUserSeeder::class);
+        $this->call(DummyUsersSeeder::class);
     }
 }
