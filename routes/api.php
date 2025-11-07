@@ -36,9 +36,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
         // project members routes
         Route::middleware(IsProjectOwnerMiddleware::class)->prefix('projects/{project}/members')->group(function () {
-            Route::get('/', [ProjectMemberController::class, 'index']);
             Route::get('/available', [ProjectMemberController::class, 'availableUsers']);
             Route::post('/invite', [ProjectMemberController::class, 'invite']);
+            Route::delete('/{member}', [ProjectMemberController::class, 'remove']);
         });
 
         // profile routes

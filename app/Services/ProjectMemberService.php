@@ -63,20 +63,51 @@ class ProjectMemberService
     }
 
     /**
-     * send invitation email to user
+     * Send invitation email to user
      */
-    private function sendInvitationEmail(User $user, Project $project, User $inviter): void
-    {
+    private function sendInvitationEmail(
+        User $user,
+        Project $project,
+        User $inviter
+    ): void {
         try {
             Mail::to($user->email)->queue(
                 new ProjectInvitationMail($user, $project, $inviter)
             );
-        } catch (\Exception $e) {
+        } catch (\Throwable $th) {
             Log::error('Failed to send project invitation email', [
                 'user_id' => $user->id,
                 'project_id' => $project->id,
-                'error' => $e->getMessage(),
+                'error' => $th->getMessage(),
             ]);
+        }
+    }
+
+    /**
+     * Remove member from project
+     */
+    public function removeMember(
+        Project $project,
+        User $member
+    ): bool {
+        // if owner
+        if ($project->isOwner($member)) {
+            return false;
+        }
+
+        // run remove user
+        try {
+            $project->members()->detach($member->id);
+
+            return true;
+        } catch (\Throwable $th) {
+            Log::error('Failed to send project invitation email', [
+                'user_id' => $member->id,
+                'project_id' => $project->id,
+                'error' => $th->getMessage(),
+            ]);
+
+            return false;
         }
     }
 }
