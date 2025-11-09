@@ -13,6 +13,8 @@ use App\Models\User;
 
 class ProjectMemberService
 {
+    public function __construct(private NotificationService $notificationService) {}
+
     /**
      * Get available users to invite to project
      */
@@ -54,6 +56,9 @@ class ProjectMemberService
                     if ($user) {
                         // send email
                         $this->sendInvitationEmail($user, $project, $inviter);
+
+                        // send notification
+                        $this->notificationService->createInvitation($user, $project, $inviter);
                     }
                 }
             });

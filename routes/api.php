@@ -42,6 +42,16 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::delete('/{member}', [ProjectMemberController::class, 'remove']);
         });
 
+        // notification routes
+        Route::prefix('notifications')->group(function () {
+            Route::get('/', [NotificationController::class, 'index']);
+            Route::get('/unread_count', [NotificationController::class, 'unreadCount']);
+            Route::post('/mark_all_read', [NotificationController::class, 'markAllAsRead']);
+            Route::post('/{notification}/read', [NotificationController::class, 'markAsRead']);
+            Route::post('/{notification}/accept', [NotificationController::class, 'acceptInvitation']);
+            Route::post('/{notification}/decline', [NotificationController::class, 'declineInvitation']);
+        });
+
         // profile routes
         Route::put('/profile/change_password', [ProfileController::class, 'changePassword']);
         Route::delete('/profile', [ProfileController::class, 'deleteAccount']);
