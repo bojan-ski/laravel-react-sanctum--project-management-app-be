@@ -5,6 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use App\Enums\ProjectStatus;
 
 class Project extends Model
@@ -37,13 +39,13 @@ class Project extends Model
     }
 
     // get project owner
-    public function owner()
+    public function owner(): BelongsTo
     {
         return $this->belongsTo(User::class, 'owner_id');
     }
 
     // get project members (including owner)
-    public function members()
+    public function members():BelongsToMany
     {
         return $this->belongsToMany(User::class, 'project_members', 'project_id', 'member_id')
             ->withTimestamps()

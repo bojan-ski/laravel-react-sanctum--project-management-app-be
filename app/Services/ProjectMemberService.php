@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\ProjectInvitationMail;
+use App\Models\Notification;
 use App\Models\Project;
 use App\Models\User;
 
@@ -17,12 +18,22 @@ class ProjectMemberService
      */
     public function getAvailableUsers(Project $project): Collection
     {
+        // get existing members
         $existingMembers = $project->members()->pluck('users.id');
 
+        // get already invited users id who have not decided yet
+        $pendingInvitationUserIds = Notification::where('notifiable_type', Project::class)
+            ->where('notifiable_id', $project->id)
+            ->where('type', 'invitation')
+            ->whereNull('action_taken')
+            ->pluck('user_id');
+
+        // run query
         $query = User::query()
             ->where('role', '!=', 'admin')
             ->where('id', '!=', $project->owner_id)
-            ->whereNotIn('id', $existingMembers);
+            ->whereNotIn('id', $existingMembers)
+            ->whereNotIn('id', $pendingInvitationUserIds);
 
         return $query->get();
     }
@@ -38,15 +49,10 @@ class ProjectMemberService
         try {
             DB::transaction(function () use ($project, $userIds, $inviter) {
                 foreach ($userIds as $userId) {
-                    // add user to project
-                    $project->members()->attach($userId, [
-                        'joined_at' => now(),
-                    ]);
-
-                    // get user for email notification
                     $user = User::find($userId);
 
                     if ($user) {
+                        // send email
                         $this->sendInvitationEmail($user, $project, $inviter);
                     }
                 }
