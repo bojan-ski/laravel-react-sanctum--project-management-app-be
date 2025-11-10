@@ -35,17 +35,9 @@ class NotificationService
     /**
      * Get user notifications
      */
-    public function getUserNotifications(
-        User $user,
-        ?bool $unreadOnly = false
-    ): Collection {
-        $query = $user->notifications()->with('notifiable')->latest();
-
-        if ($unreadOnly) {
-            $query->unread();
-        }
-
-        return $query->get();
+    public function getUserNotifications(User $user): Collection
+    {
+        return $user->notifications()->with('notifiable')->latest()->get();
     }
 
     /**
@@ -81,10 +73,6 @@ class NotificationService
         Notification $notification,
         User $user
     ): bool {
-        if (!$notification->isInvitation() || !$notification->isPending()) {
-            return false;
-        }
-
         $project = $notification->notifiable;
 
         // accept invitation/add user to project
@@ -106,11 +94,6 @@ class NotificationService
      */
     public function declineInvitation(Notification $notification): bool
     {
-        if (!$notification->isInvitation() || !$notification->isPending()) {
-            return false;
-        }
-
-        // decline invitation/update notification
         $notification->update([
             'action_taken' => InvitationStatus::DECLINED->value,
             'read_at' => now(),

@@ -20,19 +20,13 @@ class NotificationController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $unreadOnly = $request->boolean('unread_only', false);
+        $notifications = $this->notificationService->getUserNotifications($request->user());
 
-        $notifications = $this->notificationService->getUserNotifications(
-            $request->user(),
-            $unreadOnly
+        // return json result
+        return $this->success(
+            NotificationResource::collection($notifications),
+            'Notifications retrieved'
         );
-
-        // structure json result
-        $notifications->setCollection(
-            NotificationResource::collection($notifications)->collection
-        );
-
-        return $this->success($notifications, 'Notifications retrieved');
     }
 
     /**
