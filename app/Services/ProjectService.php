@@ -15,9 +15,9 @@ use App\Enums\ProjectStatus;
 class ProjectService
 {
     public function __construct(private NotificationService $notificationService) {}
-    
+
     /**
-     * get user projects with filter feature
+     * Get user projects with filter feature
      */
     public function getUserProjects(
         User $user,
@@ -62,7 +62,7 @@ class ProjectService
     }
 
     /**
-     * create project
+     * Create project
      */
     public function createProject(
         User $user,
@@ -107,7 +107,7 @@ class ProjectService
     }
 
     /**
-     * get selected project details
+     * Get selected project details
      */
     public function getProjectDetails(Project $project): Project
     {
@@ -118,7 +118,7 @@ class ProjectService
     }
 
     /**
-     * update project
+     * Update project
      */
     public function updateProject(
         Project $project,
@@ -126,20 +126,37 @@ class ProjectService
         ?UploadedFile $file = null
     ): ?Project {
         try {
-            // if file exists
-            if ($file) {
-                // if project contains a file, delete from storage
-                if ($project->document_path) {
-                    Storage::disk('public')->delete($project->document_path);
+            DB::transaction(function () use ($project, $formData, $file) {
+                // if file exists
+                if ($file) {
+                    // if project contains a file, delete from storage
+                    if ($project->document_path) {
+                        Storage::disk('public')->delete($project->document_path);
+                    }
+
+                    $filePath = $file->store('documents', 'public');
+                    $formData['document_path'] = $filePath;
                 }
 
-                $filePath = $file->store('documents', 'public');
-                $formData['document_path'] = $filePath;
-            }
+                // send notification
+                $owner = $project->owner;
+                $members = $project->members()->get();
 
-            $project->update($formData);
+                foreach ($members as $member) {
+                    if ($member->id !== $owner->id) {
+                        $this->notificationService->projectUpdated(
+                            receiver: $member,
+                            project: $project,
+                            sender: $owner
+                        );
+                    }
+                }
 
-            return $project;
+                // update project
+                $project->update($formData);
+            });
+
+            return $project->fresh();
         } catch (\Throwable $th) {
             Log::error('Project update failed', [
                 'error' => $th->getMessage()
@@ -150,32 +167,34 @@ class ProjectService
     }
 
     /**
-     * delete project
+     * Delete project
      */
     public function deleteProject(Project $project): bool
     {
         try {
-            // if file, delete from storage
-            if ($project->document_path) {
-                Storage::disk('public')->delete($project->document_path);
-            }
-
-            // send notification
-            $owner = $project->owner;
-            $members = $project->members()->get();
-
-            foreach ($members as $member) {
-                if ($member->id !== $owner->id) {
-                    $this->notificationService->projectDeleted(
-                        receiver: $member,
-                        project: $project,
-                        sender: $owner
-                    );
+            DB::transaction(function () use ($project) {
+                // if file, delete from storage
+                if ($project->document_path) {
+                    Storage::disk('public')->delete($project->document_path);
                 }
-            }
 
-            // delete from db 
-            $project->delete();
+                // send notification
+                $owner = $project->owner;
+                $members = $project->members()->get();
+
+                foreach ($members as $member) {
+                    if ($member->id !== $owner->id) {
+                        $this->notificationService->projectDeleted(
+                            receiver: $member,
+                            project: $project,
+                            sender: $owner
+                        );
+                    }
+                }
+
+                // delete from db 
+                $project->delete();
+            });
 
             return true;
         } catch (\Throwable $th) {
