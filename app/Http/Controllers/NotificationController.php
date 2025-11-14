@@ -52,7 +52,7 @@ class NotificationController extends Controller
 
         $this->notificationService->markAsRead($notification);
 
-        return $this->success(null, 'Notification marked as read');
+        return $this->success($notification->id, 'Notification marked as read');
     }
 
     /**
@@ -94,7 +94,7 @@ class NotificationController extends Controller
         }
 
         return $this->success(
-            null,
+            new NotificationResource($notification),
             'Invitation accepted successfully'
         );
     }
@@ -124,6 +124,9 @@ class NotificationController extends Controller
             return $this->error('Failed to decline invitation', 500);
         }
 
-        return $this->success(null, 'Invitation declined');
+        return $this->success(
+            new NotificationResource($notification),
+            'Invitation declined'
+        );
     }
 }

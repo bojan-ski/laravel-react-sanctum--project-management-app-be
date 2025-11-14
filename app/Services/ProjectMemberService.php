@@ -99,20 +99,23 @@ class ProjectMemberService
      */
     public function removeMember(
         Project $project,
-        User $member
+        User $member,
+        User $projectOwner
     ): bool {
-        // if owner
-        if ($project->isOwner($member)) {
-            return false;
-        }
-
-        // run remove user
         try {
+            // run remove user
             $project->members()->detach($member->id);
+
+            // send notification
+            $this->notificationService->removeFromProject(
+                $member, 
+                $project, 
+                $projectOwner
+            );
 
             return true;
         } catch (\Throwable $th) {
-            Log::error('Failed to send project invitation email', [
+            Log::error('Failed to remove project member', [
                 'user_id' => $member->id,
                 'project_id' => $project->id,
                 'error' => $th->getMessage(),

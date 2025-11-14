@@ -12,7 +12,7 @@ use App\Enums\InvitationStatus;
 class NotificationService
 {
     /**
-     * Create project invitation notification
+     * Create notification - project invitation
      */
     public function createInvitation(
         User $invitee,
@@ -28,6 +28,27 @@ class NotificationService
                 'inviter_name' => $inviter->name,
                 'inviter_id' => $inviter->id,
                 'message' => "{$inviter->name} invited you to join {$project->title}",
+            ]
+        ]);
+    }
+
+    /**
+     * Create notification - remove from project
+     */
+    public function removeFromProject(
+        User $receiver,
+        Project $project,
+        User $sender
+    ): Notification {
+        return Notification::create([
+            'user_id' => $receiver->id,
+            'type' => NotificationType::REMOVED_FROM_PROJECT->value,
+            'notifiable_type' => Project::class,
+            'notifiable_id' => $project->id,
+            'data' => [
+                'sender_name' => $sender->name,
+                'sender_id' => $sender->id,
+                'message' => "{$sender->name} removed you from {$project->title}",
             ]
         ]);
     }

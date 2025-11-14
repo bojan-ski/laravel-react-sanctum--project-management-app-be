@@ -54,9 +54,21 @@ class ProjectMemberController extends Controller
     /**
      * Remove member from project
      */
-    public function remove(Project $project, User $member): JsonResponse
-    {
-        $response = $this->memberService->removeMember($project, $member);
+    public function remove(
+        Project $project,
+        User $member
+    ): JsonResponse {
+        if (!$project->isMember($member)) {
+            return $this->error('Member does not exist', 404);
+        }
+
+        $projectOwner = auth()->user();
+
+        $response = $this->memberService->removeMember(
+            $project,
+            $member,
+            $projectOwner
+        );
 
         if (!$response) {
             return $this->error('Failed to remove member', 500);
