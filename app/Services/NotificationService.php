@@ -54,6 +54,27 @@ class NotificationService
     }
 
     /**
+     * Create notification - project deleted
+     */
+    public function projectDeleted(
+        User $receiver,
+        Project $project,
+        User $sender
+    ): Notification {
+        return Notification::create([
+            'user_id' => $receiver->id,
+            'type' => NotificationType::PROJECT_DELETED->value,
+            'notifiable_type' => Project::class,
+            'notifiable_id' => $project->id,
+            'data' => [
+                'sender_name' => $sender->name,
+                'sender_id' => $sender->id,
+                'message' => "{$sender->name} deleted the project: {$project->title}",
+            ]
+        ]);
+    }
+
+    /**
      * Get user notifications
      */
     public function getUserNotifications(User $user): Collection

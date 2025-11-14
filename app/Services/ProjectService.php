@@ -14,6 +14,8 @@ use App\Enums\ProjectStatus;
 
 class ProjectService
 {
+    public function __construct(private NotificationService $notificationService) {}
+    
     /**
      * get user projects with filter feature
      */
@@ -156,6 +158,20 @@ class ProjectService
             // if file, delete from storage
             if ($project->document_path) {
                 Storage::disk('public')->delete($project->document_path);
+            }
+
+            // send notification
+            $owner = $project->owner;
+            $members = $project->members()->get();
+
+            foreach ($members as $member) {
+                if ($member->id !== $owner->id) {
+                    $this->notificationService->projectDeleted(
+                        receiver: $member,
+                        project: $project,
+                        sender: $owner
+                    );
+                }
             }
 
             // delete from db 
