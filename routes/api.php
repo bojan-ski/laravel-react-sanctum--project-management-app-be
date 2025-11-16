@@ -14,53 +14,61 @@ use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProjectMemberController;
 
-// auth routes
+// Auth routes (both users)
 Route::post('/login', [AuthController::class, 'login']);
-
-// regular user routes
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
+});
 
-    Route::middleware(IsRegularUserMiddleware::class)->group(function () {
-        // project routes
-        Route::get('/projects', [ProjectController::class, 'index']);
-        Route::post('/projects', [ProjectController::class, 'store']);
+// Regular user routes
+Route::middleware(['auth:sanctum', IsRegularUserMiddleware::class])->group(function () {
+    // project routes
+    Route::prefix('projects')->group(function () {
+        Route::get('/', [ProjectController::class, 'index']);
+        Route::post('/', [ProjectController::class, 'store']);
 
         Route::middleware(IsProjectOwnerMiddleware::class)->group(function () {
-            Route::get('/projects/{project}/edit', [ProjectController::class, 'edit']);
-            Route::put('/projects/{project}/update', [ProjectController::class, 'update']);
-            Route::delete('/projects/{project}/delete_file', [DocumentController::class, 'deleteFile']);
-            Route::delete('/projects/{project}/destroy', [ProjectController::class, 'destroy']);
+            Route::get('/{project}/edit', [ProjectController::class, 'edit']);
+            Route::put('/{project}/update', [ProjectController::class, 'update']);
+            Route::delete('/{project}/delete_file', [DocumentController::class, 'deleteFile']);
+            Route::put('/{project}/{status}', [ProjectController::class, 'status']);
+            Route::delete('/{project}/destroy', [ProjectController::class, 'destroy']);
         });
 
-        Route::get('/projects/{project}', [ProjectController::class, 'show'])->middleware(IsProjectMemberMiddleware::class);
+        Route::get('/{project}', [ProjectController::class, 'show'])->middleware(IsProjectMemberMiddleware::class);
+    });
 
-        // project members routes
-        Route::middleware(IsProjectOwnerMiddleware::class)->prefix('projects/{project}/members')->group(function () {
+    // project members routes
+    Route::middleware(IsProjectOwnerMiddleware::class)
+        ->prefix('projects/{project}/members')
+        ->group(function () {
             Route::get('/available', [ProjectMemberController::class, 'availableUsers']);
             Route::post('/invite', [ProjectMemberController::class, 'invite']);
             Route::delete('/{member}', [ProjectMemberController::class, 'remove']);
         });
 
-        // notification routes
-        Route::prefix('notifications')->group(function () {
-            Route::get('/', [NotificationController::class, 'index']);
-            Route::get('/unread_count', [NotificationController::class, 'unreadCount']);
-            Route::post('/mark_all_as_read', [NotificationController::class, 'markAllAsRead']);
-            Route::post('/{notification}/read', [NotificationController::class, 'markAsRead']);
-            Route::post('/{notification}/accept', [NotificationController::class, 'acceptInvitation']);
-            Route::post('/{notification}/decline', [NotificationController::class, 'declineInvitation']);
-        });
+    // notification routes
+    Route::prefix('notifications')->group(function () {
+        Route::get('/', [NotificationController::class, 'index']);
+        Route::get('/unread_count', [NotificationController::class, 'unreadCount']);
+        Route::post('/mark_all_as_read', [NotificationController::class, 'markAllAsRead']);
+        Route::post('/{notification}/read', [NotificationController::class, 'markAsRead']);
+        Route::post('/{notification}/accept', [NotificationController::class, 'acceptInvitation']);
+        Route::post('/{notification}/decline', [NotificationController::class, 'declineInvitation']);
+    });
 
-        // profile routes
-        Route::put('/profile/change_password', [ProfileController::class, 'changePassword']);
-        Route::delete('/profile', [ProfileController::class, 'deleteAccount']);
+    // profile routes
+    Route::prefix('profile')->group(function () {
+        Route::put('/change_password', [ProfileController::class, 'changePassword']);
+        Route::delete('/', [ProfileController::class, 'deleteAccount']);
     });
 });
 
 // admin user routes
-Route::middleware(['auth:sanctum', IsAdminUserMiddleware::class])->prefix('admin')->group(function () {
-    Route::get('/users', [UserController::class, 'index']);
-    Route::post('/users', [UserController::class, 'store']);
-    Route::delete('/users/{user}', [UserController::class, 'destroy']);
-});
+Route::middleware(['auth:sanctum', IsAdminUserMiddleware::class])
+    ->prefix('admin')
+    ->group(function () {
+        Route::get('/users', [UserController::class, 'index']);
+        Route::post('/users', [UserController::class, 'store']);
+        Route::delete('/users/{user}', [UserController::class, 'destroy']);
+    });

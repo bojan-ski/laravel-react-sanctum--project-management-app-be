@@ -21,8 +21,8 @@ class ProjectService
      */
     public function getUserProjects(
         User $user,
-        ?string $ownership = 'all',
-        ?string $status = null
+        string $ownership = 'all',
+        string $status = 'all'
     ): LengthAwarePaginator {
         $query = Project::query();
 
@@ -50,7 +50,7 @@ class ProjectService
         }
 
         // filter by project status
-        if ($status && $status !== 'all') {
+        if ($status !== 'all') {
             $query->where('status', $status);
         }
 
@@ -159,6 +159,43 @@ class ProjectService
             return $project->fresh();
         } catch (\Throwable $th) {
             Log::error('Project update failed', [
+                'error' => $th->getMessage()
+            ]);
+
+            return null;
+        }
+    }
+
+    /**
+     * Change project status
+     */
+    public function statusChange(
+        string $status,
+        Project $project,
+    ): ?Project {
+        try {
+            DB::transaction(function () use ($project, $status) {
+                // send notification
+                $owner = $project->owner;
+                $members = $project->members()->get();
+
+                foreach ($members as $member) {
+                    if ($member->id !== $owner->id) {
+                        $this->notificationService->projectUpdated(
+                            receiver: $member,
+                            project: $project,
+                            sender: $owner
+                        );
+                    }
+                }
+
+                // change project status
+                $project->update(['status' => $status]);
+            });
+
+            return $project->fresh();
+        } catch (\Throwable $th) {
+            Log::error('Project status change failed', [
                 'error' => $th->getMessage()
             ]);
 

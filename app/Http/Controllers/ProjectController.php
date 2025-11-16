@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use App\Http\Requests\Project\FilterRequest;
 use App\Http\Requests\Project\ProjectRequest;
+use App\Http\Requests\Project\StatusRequest;
 use App\Http\Resources\ProjectCardResource;
 use App\Http\Resources\ProjectResource;
 use App\Services\ProjectService;
@@ -24,8 +25,10 @@ class ProjectController extends Controller
     public function index(FilterRequest $request): JsonResponse
     {
         // filter options
-        $ownership = $request->input('ownership', $request->validated());
-        $status = $request->input('status');
+        $validated = $request->validated();
+
+        $ownership = $validated['ownership'] ?? 'all';
+        $status = $validated['status'] ?? 'all';
 
         // get projects
         $projects = $this->projectService->getUserProjects(
@@ -106,6 +109,28 @@ class ProjectController extends Controller
         }
 
         return $this->success($updatedProject, 'Project updated', 201);
+    }
+
+    /**
+     * Change project status to completed or cancelled
+     */
+    public function status(StatusRequest $request, Project $project): JsonResponse
+    {
+        // get new project status
+        $status = $request->validated()['status'];
+
+        // call project service
+        $updatedProject = $this->projectService->statusChange(
+            $status,
+            $project,
+        );
+
+        // return json
+        if (!$updatedProject) {
+            return $this->error('Failed to change project status!', 500);
+        }
+
+        return $this->success($updatedProject, 'Project status updated', 201);
     }
 
     /**

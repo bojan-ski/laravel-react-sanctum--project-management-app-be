@@ -6,7 +6,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use App\Enums\ProjectStatus;
 
-class FilterRequest extends FormRequest
+class StatusRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -24,8 +24,7 @@ class FilterRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'ownership' => 'nullable|string|in:owner,member,all',
-            'status' => ['nullable', 'string', Rule::in([...ProjectStatus::values(), 'all'])],
+            'status' => ['nullable', 'string', Rule::in([...ProjectStatus::values()])],
         ];
     }
 }
