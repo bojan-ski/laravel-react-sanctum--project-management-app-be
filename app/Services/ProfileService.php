@@ -2,46 +2,58 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\Hash;
-use App\Models\User;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use App\Models\User;
 
 class ProfileService
 {
     /**
-     * change password
+     * Change user password
      */
-    public function changePassword(User $user, string $oldPassword, string $newPassword): bool
-    {
-        if (!Hash::check($oldPassword, $user->password)) {
+    public function changePassword(
+        User $user,
+        string $newPassword
+    ): bool {
+        try {
+            $user->password = $newPassword;
+
+            $user->save();
+
+            return true;
+        } catch (\Throwable $th) {
+            Log::error('Change password failed', [
+                'error' => $th->getMessage(),
+            ]);
+
             return false;
-        };
-
-        $user->password = $newPassword;
-
-        $user->save();
-
-        return true;
+        }
     }
 
     /**
-     * delete user account
+     * Delete user account
      */
-    public function deleteAccount(Request $request, User $user, string $password): bool
-    {
-        if (!Hash::check($password, $user->password)) {
+    public function deleteAccount(
+        Request $request,
+        User $user,
+    ): bool {
+        try {
+            Auth::guard('web')->logout();
+
+            $request->session()->invalidate();
+
+            $request->session()->regenerateToken();
+
+            $user->delete();
+
+            return true;
+        } catch (\Throwable $th) {
+            Log::error('Delete account failed', [
+                'error' => $th->getMessage(),
+            ]);
+
             return false;
         }
-
-        Auth::guard('web')->logout();
-
-        $request->session()->invalidate();
-        
-        $request->session()->regenerateToken();
-
-        $user->delete();
-
-        return true;
     }
 }

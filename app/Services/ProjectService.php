@@ -86,10 +86,6 @@ class ProjectService
                     'document_path' => $formData['document_path'] ?? null
                 ]);
 
-                // TEST - REMOVE ON APP COMPLETION
-                $project->update(['status' => ProjectStatus::CLOSED]);
-                // TEST - REMOVE ON APP COMPLETION
-
                 // add owner as member
                 $project->members()->attach($user->id, [
                     'joined_at' => now(),
