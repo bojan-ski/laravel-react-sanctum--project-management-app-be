@@ -3,12 +3,44 @@
 namespace App\Services;
 
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use App\Models\User;
 
 class ProfileService
 {
+    public function __construct(private AvatarService $avatarService) {}
+
+    /**
+     * Upload user avatar
+     */
+    public function uploadAvatar(
+        User $user,
+        UploadedFile $avatar
+    ): ?User {
+        try {
+            // delete old avatar
+            if ($user->avatar) {
+                Storage::disk('public')->delete($user->avatar);
+            }
+
+            $path = $this->avatarService->processAvatar($avatar, $user->id);
+
+            $user->avatar = $path;
+            $user->save();
+
+            return $user;
+        } catch (\Throwable $th) {
+            Log::error('Avatar upload failed', [
+                'error' => $th->getMessage()
+            ]);
+
+            return null;
+        }
+    }
+
     /**
      * Change user password
      */
@@ -18,7 +50,6 @@ class ProfileService
     ): bool {
         try {
             $user->password = $newPassword;
-
             $user->save();
 
             return true;
@@ -35,15 +66,13 @@ class ProfileService
      * Delete user account
      */
     public function deleteAccount(
-        Request $request,
         User $user,
     ): bool {
         try {
             Auth::guard('web')->logout();
 
-            $request->session()->invalidate();
-
-            $request->session()->regenerateToken();
+            session()->invalidate();
+            session()->regenerateToken();
 
             $user->delete();
 

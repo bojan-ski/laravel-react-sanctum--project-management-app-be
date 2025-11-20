@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Hash;
+use App\Http\Requests\Profile\AvatarRequest;
 use App\Http\Requests\Profile\ChangePasswordRequest;
 use App\Http\Requests\Profile\DeleteAccountRequest;
 use App\Services\ProfileService;
@@ -17,21 +18,44 @@ class ProfileController extends Controller
     public function __construct(private ProfileService $profileService) {}
 
     /**
+     * Upload user avatar
+     */
+    public function uploadAvatar(AvatarRequest $request): JsonResponse
+    {
+        $user = $request->user();
+        $avatar = $request->file('avatar');
+
+        // call profile service
+        $updatedUser = $this->profileService->uploadAvatar(
+            $user,
+            $avatar
+        );
+
+        // return json
+        if (!$updatedUser) {
+            return $this->error('Failed to upload avatar!', 500);
+        }
+
+        return $this->success($updatedUser, 'Avatar updated');
+    }
+
+    /**
      * Change user password
      */
     public function changePassword(ChangePasswordRequest $request): JsonResponse
     {
         $user = $request->user();
+        $formData = $request->validated();
 
         // check password
-        if (!Hash::check($request->oldPassword, $user->password)) {
+        if (!Hash::check($formData['old_password'], $user->password)) {
             return $this->error('Wrong password', 400);
         };
 
         // call profile service
         $response = $this->profileService->changePassword(
             $request->user(),
-            $request->new_password
+            $formData['new_password']
         );
 
         // return json
@@ -56,7 +80,6 @@ class ProfileController extends Controller
 
         // call profile service
         $response = $this->profileService->deleteAccount(
-            $request,
             $user
         );
 

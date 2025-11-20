@@ -59,6 +59,7 @@ Route::middleware(['auth:sanctum', IsRegularUserMiddleware::class])->group(funct
 
     // profile routes
     Route::prefix('profile')->group(function () {
+        Route::post('/upload_avatar', [ProfileController::class, 'uploadAvatar']);
         Route::put('/change_password', [ProfileController::class, 'changePassword']);
         Route::delete('/', [ProfileController::class, 'deleteAccount']);
     });
