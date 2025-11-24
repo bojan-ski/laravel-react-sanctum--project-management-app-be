@@ -98,9 +98,18 @@ class NotificationService
     /**
      * Get user notifications
      */
-    public function getUserNotifications(User $user): Collection
+    public function getUserNotifications(
+        User $user,
+        bool $unreadOnly = false
+        ): Collection
     {
-        return $user->notifications()->with('notifiable')->latest()->get();
+        $query = $user->notifications()->with('notifiable')->latest();
+
+        if($unreadOnly){
+            $query->unread();
+        }
+
+        return $query->get();
     }
 
     /**

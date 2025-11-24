@@ -10,7 +10,6 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Pagination\LengthAwarePaginator;
 use App\Models\User;
 use App\Models\Project;
-use App\Enums\ProjectStatus;
 
 class ProjectService
 {

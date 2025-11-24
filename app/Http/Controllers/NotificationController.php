@@ -20,7 +20,12 @@ class NotificationController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $notifications = $this->notificationService->getUserNotifications($request->user());
+        $unreadOnly = $request->boolean('unread', true);
+
+        $notifications = $this->notificationService->getUserNotifications(
+            $request->user(),
+            $unreadOnly
+        );
 
         // return json result
         return $this->success(
@@ -36,7 +41,10 @@ class NotificationController extends Controller
     {
         $count = $this->notificationService->getUnreadCount($request->user());
 
-        return $this->success(['count' => $count], 'Unread count retrieved');
+        return $this->success(
+            ['count' => $count],
+            'Unread count retrieved'
+        );
     }
 
     /**
@@ -52,7 +60,10 @@ class NotificationController extends Controller
 
         $this->notificationService->markAsRead($notification);
 
-        return $this->success($notification->id, 'Notification marked as read');
+        return $this->success(
+            $notification->id,
+            'Notification marked as read'
+        );
     }
 
     /**
