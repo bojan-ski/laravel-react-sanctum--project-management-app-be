@@ -62,6 +62,18 @@ class User extends Authenticatable
         return $this->belongsToMany(Project::class, 'project_members', 'member_id', 'project_id');
     }
 
+    // get tasks created by user
+    public function createdTasks(): HasMany
+    {
+        return $this->hasMany(Task::class, 'created_by');
+    }
+
+    // get assigned tasks
+    public function assignedTasks(): HasMany
+    {
+        return $this->hasMany(Task::class, 'assigned_to');
+    }
+
     // user notifications
     public function notifications(): HasMany
     {

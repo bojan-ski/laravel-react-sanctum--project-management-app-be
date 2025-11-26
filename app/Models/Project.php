@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use App\Enums\ProjectStatus;
 
 class Project extends Model
@@ -24,8 +25,8 @@ class Project extends Model
     ];
 
     protected $casts = [
-        'deadline' => 'date',
-        'status' => ProjectStatus::class
+        'status' => ProjectStatus::class,
+        'deadline' => 'date'
     ];
 
     //  add user id (owner_id) on new project create 
@@ -45,7 +46,7 @@ class Project extends Model
     }
 
     // get project members (including owner)
-    public function members():BelongsToMany
+    public function members(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'project_members', 'project_id', 'member_id')
             ->withTimestamps()
@@ -62,5 +63,11 @@ class Project extends Model
     public function isMember(User $user): bool
     {
         return $this->members()->where('member_id', $user->id)->exists();
+    }
+
+    // get project tasks
+    public function tasks(): HasMany
+    {
+        return $this->hasMany(Task::class);
     }
 }
