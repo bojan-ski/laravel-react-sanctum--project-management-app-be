@@ -24,25 +24,21 @@ class ProjectController extends Controller
      */
     public function index(FilterRequest $request): JsonResponse
     {
-        // filter options
-        $validated = $request->validated();
+        $filters = $request->validated();
 
-        $ownership = $validated['ownership'] ?? 'all';
-        $status = $validated['status'] ?? 'all';
+        $ownership = $filters['ownership'] ?? 'all';
+        $status = $filters['status'] ?? 'all';
 
-        // get projects
         $projects = $this->projectService->getUserProjects(
             $request->user(),
             $ownership,
             $status
         );
 
-        // structure json result
         $projects->setCollection(
             ProjectCardResource::collection($projects)->collection
         );
 
-        // return json
         return $this->success($projects, 'Projects retrieved');
     }
 
@@ -52,17 +48,14 @@ class ProjectController extends Controller
     // Run php artisan storage:link to create a symbolic link from public/storage to storage/app/public
     public function store(ProjectRequest $request): JsonResponse
     {
-        // get file
         $file = $request->file('document_path');
 
-        // call project service
         $response = $this->projectService->createProject(
             $request->user(),
             $request->validated(),
             $file
         );
 
-        // return json
         if (!$response) {
             return $this->error('Failed to create project!', 500);
         }
@@ -77,7 +70,10 @@ class ProjectController extends Controller
     {
         $project = $this->projectService->getProjectDetails($project);
 
-        return $this->success(new ProjectResource($project), 'Project details retrieved');
+        return $this->success(
+            new ProjectResource($project),
+            'Project details retrieved'
+        );
     }
 
     /**
@@ -91,19 +87,18 @@ class ProjectController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(ProjectRequest $request, Project $project): JsonResponse
-    {
-        // get file
+    public function update(
+        ProjectRequest $request,
+        Project $project
+    ): JsonResponse {
         $file = $request->hasFile('document_path') ? $request->file('document_path') : null;
 
-        // call project service
         $updatedProject = $this->projectService->updateProject(
             $project,
             $request->validated(),
             $file
         );
 
-        // return json
         if (!$updatedProject) {
             return $this->error('Failed to update project!', 500);
         }
@@ -114,18 +109,17 @@ class ProjectController extends Controller
     /**
      * Change project status to completed or cancelled
      */
-    public function status(StatusRequest $request, Project $project): JsonResponse
-    {
-        // get new project status
+    public function status(
+        StatusRequest $request,
+        Project $project
+    ): JsonResponse {
         $status = $request->validated()['status'];
 
-        // call project service
         $updatedProject = $this->projectService->statusChange(
             $status,
             $project,
         );
 
-        // return json
         if (!$updatedProject) {
             return $this->error('Failed to change project status!', 500);
         }
@@ -138,10 +132,8 @@ class ProjectController extends Controller
      */
     public function destroy(Project $project): JsonResponse
     {
-        // call project service
         $response = $this->projectService->deleteProject($project);
 
-        // return json
         if (!$response) {
             return $this->error('Delete project error!', 500);
         }

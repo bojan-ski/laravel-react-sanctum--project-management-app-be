@@ -65,7 +65,7 @@ Route::middleware(['auth:sanctum', IsRegularUserMiddleware::class])->group(funct
     });
 });
 
-// admin user routes
+// Admin user routes
 Route::middleware(['auth:sanctum', IsAdminUserMiddleware::class])
     ->prefix('admin')
     ->group(function () {

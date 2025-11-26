@@ -108,8 +108,8 @@ class ProjectMemberService
 
             // send notification
             $this->notificationService->removeFromProject(
-                $member, 
-                $project, 
+                $member,
+                $project,
                 $projectOwner
             );
 

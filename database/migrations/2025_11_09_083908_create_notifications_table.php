@@ -24,8 +24,8 @@ return new class extends Migration
 
             $table->index('user_id');
             $table->index(['notifiable_type', 'notifiable_id']);
-            $table->index('read_at');
             $table->index('action_taken');
+            $table->index('read_at');
         });
     }
 

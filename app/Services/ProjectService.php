@@ -53,11 +53,10 @@ class ProjectService
             $query->where('status', $status);
         }
 
-        // return projects
         return $query->with(['owner'])
             ->withCount(['members'])
             ->latest()
-            ->paginate(2);
+            ->paginate(12);
     }
 
     /**

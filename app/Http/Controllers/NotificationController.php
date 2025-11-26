@@ -20,7 +20,7 @@ class NotificationController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $unreadOnly = $request->boolean('unread', true);
+        $unreadOnly = $request->boolean('unread');
 
         $notifications = $this->notificationService->getUserNotifications(
             $request->user(),

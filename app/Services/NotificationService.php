@@ -100,7 +100,7 @@ class NotificationService
      */
     public function getUserNotifications(
         User $user,
-        bool $unreadOnly = false
+        bool $unreadOnly
         ): Collection
     {
         $query = $user->notifications()->with('notifiable')->latest();
