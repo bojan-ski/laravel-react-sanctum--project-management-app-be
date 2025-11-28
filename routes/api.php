@@ -10,9 +10,10 @@ use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\Admin\UserController;
-use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProjectMemberController;
+use App\Http\Controllers\TaskController;
+use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\Admin\UserController;
 
 // Auth routes (both users)
 Route::post('/login', [AuthController::class, 'login']);
@@ -46,6 +47,11 @@ Route::middleware(['auth:sanctum', IsRegularUserMiddleware::class])->group(funct
             Route::post('/invite', [ProjectMemberController::class, 'invite']);
             Route::delete('/{member}', [ProjectMemberController::class, 'remove']);
         });
+
+    // task routes
+    Route::middleware(IsProjectOwnerMiddleware::class)->group(function () {
+        Route::post('/projects/{project}/tasks', [TaskController::class, 'store']);
+    });
 
     // notification routes
     Route::prefix('notifications')->group(function () {

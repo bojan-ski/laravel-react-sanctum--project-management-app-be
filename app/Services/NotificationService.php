@@ -8,6 +8,7 @@ use App\Models\Project;
 use App\Models\User;
 use App\Enums\NotificationType;
 use App\Enums\InvitationStatus;
+use App\Models\Task;
 
 class NotificationService
 {
@@ -96,16 +97,37 @@ class NotificationService
     }
 
     /**
+     * Create notification - assigned a task
+     */
+    public function taskAssigned(
+        User $receiver,
+        Project $project,
+        Task $task,
+        User $sender
+    ): Notification {
+        return Notification::create([
+            'user_id' => $receiver->id,
+            'type' => NotificationType::TASK_ASSIGNED->value,
+            'notifiable_type' => Task::class,
+            'notifiable_id' => $task->id,
+            'data' => [
+                'sender_name' => $sender->name,
+                'sender_id' => $sender->id,
+                'message' => "{$sender->name} assigned you a task {$task->title}, in project: {$project->title}",
+            ]
+        ]);
+    }
+
+    /**
      * Get user notifications
      */
     public function getUserNotifications(
         User $user,
         bool $unreadOnly
-        ): Collection
-    {
+    ): Collection {
         $query = $user->notifications()->with('notifiable')->latest();
 
-        if($unreadOnly){
+        if ($unreadOnly) {
             $query->unread();
         }
 
