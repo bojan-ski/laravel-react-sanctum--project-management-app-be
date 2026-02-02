@@ -15,11 +15,7 @@ use App\Http\Controllers\TaskController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\Admin\UserController;
 
-// Auth routes (both users)
-Route::post('/login', [AuthController::class, 'login']);
-Route::middleware('auth:sanctum')->group(function () {
-    Route::post('/logout', [AuthController::class, 'logout']);
-});
+require __DIR__ . '/auth.php';
 
 // Regular user routes
 Route::middleware(['auth:sanctum', IsRegularUserMiddleware::class])->group(function () {

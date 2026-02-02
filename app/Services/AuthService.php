@@ -3,7 +3,7 @@
 namespace App\Services;
 
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Http\Request;
+use App\Exceptions\AuthException;
 use App\Models\User;
 
 class AuthService
@@ -11,24 +11,12 @@ class AuthService
     /**
      * login user
      */
-    public function login(array $data): ?User
+    public function login(array $formData): ?User
     {
-        if (!Auth::attempt($data)) {
-            return null;
+        if (!Auth::attempt($formData)) {
+            throw AuthException::invalidCredentials($formData['email']);
         }
 
         return Auth::user();
-    }
-
-    /**
-     * logout user
-     */
-    public function logout(Request $request): void
-    {
-        Auth::guard('web')->logout();
-
-        $request->session()->invalidate();
-
-        $request->session()->regenerateToken();
     }
 }

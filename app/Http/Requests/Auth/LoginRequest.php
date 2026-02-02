@@ -3,6 +3,8 @@
 namespace App\Http\Requests\Auth;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Contracts\Validation\Validator;
+use Illuminate\Http\Exceptions\HttpResponseException;
 
 class LoginRequest extends FormRequest
 {
@@ -15,6 +17,20 @@ class LoginRequest extends FormRequest
     }
 
     /**
+     * Handle a failed validation attempt
+     */
+    protected function failedValidation(Validator $validator): void
+    {
+        throw new HttpResponseException(
+            response()->json([
+                'status' => 'error',
+                'message' => 'Validation failed',
+                'errors' => $validator->errors(),
+            ], 422)
+        );
+    }
+
+    /**
      * Get the validation rules that apply to the request.
      *
      * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
@@ -23,7 +39,7 @@ class LoginRequest extends FormRequest
     {
         return [
             'email' => 'required|string|email|max:48',
-            'password' => 'required|string|min:6',
+            'password' => 'required|string',
         ];
     }
 }

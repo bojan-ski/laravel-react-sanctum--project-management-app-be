@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers\Auth;
 
-use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\JsonResponse;
 use App\Http\Requests\Auth\LoginRequest;
+use App\Http\Resources\UserResource;
+use App\Exceptions\AuthException;
 use App\Services\AuthService;
 use App\Traits\ApiResponse;
 
@@ -20,22 +22,35 @@ class AuthController extends Controller
      */
     public function login(LoginRequest $request): JsonResponse
     {
-        $user = $this->authService->login($request->validated());
 
-        if (!$user) {
-            return $this->error('Invalid login details!', 401);
+        try {
+            $user = $this->authService->login($request->validated());
+
+            return $this->success(
+                message: 'Login successful',
+                data: new UserResource($user),
+            );
+        } catch (AuthException $e) {
+            $e->report();
+            return $this->error(
+                message: $e->getMessage(),
+                statusCode: 401
+            );
         }
-
-        return $this->success($user, 'Login successful');
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function logout(Request $request): JsonResponse
+    public function logout(): JsonResponse
     {
-        $this->authService->logout($request);
+        Auth::guard('web')->logout();
 
-        return $this->success(null, 'Logged out successfully');
+        session()->invalidate();
+        session()->regenerateToken();
+
+        return $this->success(
+            message: 'Logged out successfully'
+        );
     }
 }
