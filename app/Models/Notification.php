@@ -24,6 +24,7 @@ class Notification extends Model
     ];
 
     protected $casts = [
+        'type' => NotificationType::class,
         'data' => 'array',
         'read_at' => 'datetime',
     ];
@@ -63,7 +64,7 @@ class Notification extends Model
     // is invitation
     public function isInvitation(): bool
     {
-        return $this->type === NotificationType::INVITATION->value;
+        return $this->type === NotificationType::INVITATION;
     }
 
     // is invitation pending
@@ -81,7 +82,7 @@ class Notification extends Model
     // get pending invitations
     public function scopePendingInvitations($query)
     {
-        return $query->where('type', NotificationType::INVITATION->value)
+        return $query->where('type', NotificationType::INVITATION)
             ->whereNull('action_taken');
     }
 }

@@ -16,13 +16,16 @@ return new class extends Migration
             $table->foreignId('task_id')->constrained('tasks')->onDelete('cascade');
             $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('set null');
             $table->string('action');
-            $table->string('changes');
+            $table->text('changes');
             $table->string('document_path')->nullable();
             $table->timestamps();
 
             $table->index('task_id');
             $table->index('user_id');
             $table->index('action');
+            $table->index('created_at');
+
+            $table->index(['task_id', 'created_at']);
         });
     }
 

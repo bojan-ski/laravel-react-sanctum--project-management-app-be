@@ -2,12 +2,10 @@
 
 namespace App\Enums;
 
-enum TaskPriority: string
+enum UserRole:string
 {
-    case LOW = 'low';
-    case MEDIUM = 'medium';
-    case HIGH = 'high';
-    case CRITICAL = 'critical';
+    case USER = 'user';
+    case ADMIN = 'admin';
 
     public static function values(): array
     {

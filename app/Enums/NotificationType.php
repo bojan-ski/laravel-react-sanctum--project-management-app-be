@@ -10,4 +10,9 @@ enum NotificationType: string
     case PROJECT_UPDATE = 'project_update';
     case PROJECT_DELETED = 'project_deleted';
     case REMOVED_FROM_PROJECT = 'removed_from_project';
+
+    public static function values(): array
+    {
+        return array_column(self::cases(), 'value');
+    }
 }

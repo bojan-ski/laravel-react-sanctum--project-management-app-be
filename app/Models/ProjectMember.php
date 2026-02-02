@@ -16,7 +16,7 @@ class ProjectMember extends Pivot
     ];
 
     protected $casts = [
-        'joined_at' => 'date',
+        'joined_at' => 'datetime',
     ];
 
     // relation to a project
@@ -25,9 +25,15 @@ class ProjectMember extends Pivot
         return $this->belongsTo(Project::class);
     }
 
+    // get the member (user)
+    private function member(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'member_id');
+    }
+
     // relation to a user
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->member();
     }
 }

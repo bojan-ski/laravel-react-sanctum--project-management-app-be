@@ -20,6 +20,13 @@ return new class extends Migration
             $table->date('deadline');
             $table->string('document_path')->nullable();
             $table->timestamps();
+
+            $table->index('owner_id');
+            $table->index('status');
+            $table->index('deadline');
+            $table->index('created_at');
+
+            $table->index(['owner_id', 'status']);
         });
     }
 
