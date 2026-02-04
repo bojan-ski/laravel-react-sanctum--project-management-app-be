@@ -16,6 +16,7 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\Admin\UserController;
 
 require __DIR__ . '/auth.php';
+require __DIR__ . '/profile.php';
 
 // Regular user routes
 Route::middleware(['auth:sanctum', IsRegularUserMiddleware::class])->group(function () {
@@ -57,13 +58,6 @@ Route::middleware(['auth:sanctum', IsRegularUserMiddleware::class])->group(funct
         Route::post('/{notification}/read', [NotificationController::class, 'markAsRead']);
         Route::post('/{notification}/accept', [NotificationController::class, 'acceptInvitation']);
         Route::post('/{notification}/decline', [NotificationController::class, 'declineInvitation']);
-    });
-
-    // profile routes
-    Route::prefix('profile')->group(function () {
-        Route::post('/upload_avatar', [ProfileController::class, 'uploadAvatar']);
-        Route::put('/change_password', [ProfileController::class, 'changePassword']);
-        Route::delete('/', [ProfileController::class, 'deleteAccount']);
     });
 });
 

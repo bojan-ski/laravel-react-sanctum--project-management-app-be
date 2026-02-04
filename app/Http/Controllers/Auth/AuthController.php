@@ -15,14 +15,13 @@ class AuthController extends Controller
 {
     use ApiResponse;
 
-    public function __construct(private AuthService $authService) {}
+    public function __construct(protected readonly AuthService $authService) {}
 
     /**
      * Store a newly created resource in storage - login feature.
      */
     public function login(LoginRequest $request): JsonResponse
     {
-
         try {
             $user = $this->authService->login($request->validated());
 
@@ -34,7 +33,7 @@ class AuthController extends Controller
             $e->report();
             return $this->error(
                 message: $e->getMessage(),
-                statusCode: 401
+                statusCode: $e->getStatusCode()
             );
         }
     }

@@ -2,43 +2,48 @@
 
 namespace App\Services;
 
-use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Hash;
+use App\Exceptions\ProfileException;
 use App\Models\User;
 
 class ProfileService
 {
-    public function __construct(private AvatarService $avatarService) {}
+    public function __construct(protected readonly AvatarService $avatarService) {}
 
     /**
-     * Upload user avatar
+     * Update user profile
      */
-    public function uploadAvatar(
+    public function updateProfile(
         User $user,
         UploadedFile $avatar
-    ): ?User {
+    ): User {
         try {
-            // delete old avatar
-            if ($user->avatar) {
-                Storage::disk('public')->delete($user->avatar);
-            }
-
-            $path = $this->avatarService->processAvatar($avatar, $user->id);
-
-            $user->avatar = $path;
+            $user->avatar = $this->avatarService->uploadAvatar(
+                $user,
+                $avatar
+            );
             $user->save();
 
-            return $user;
-        } catch (\Throwable $th) {
-            Log::error('Avatar upload failed', [
-                'error' => $th->getMessage()
-            ]);
-
-            return null;
+            return $user->fresh();
+        } catch (\Throwable $e) {
+            throw new ProfileException(
+                userId: $user->id,
+                previous: $e,
+            );
         }
+    }
+
+    /**
+     * Validate user password
+     */
+    public function validateUserPassword(
+        User $user,
+        string $oldPassword
+    ): void {
+        if (!Hash::check($oldPassword, $user->password)) {
+            throw ProfileException::passwordIncorrect($user->id);
+        };
     }
 
     /**
@@ -47,42 +52,29 @@ class ProfileService
     public function changePassword(
         User $user,
         string $newPassword
-    ): bool {
+    ): void {
         try {
-            $user->password = $newPassword;
-            $user->save();
-
-            return true;
-        } catch (\Throwable $th) {
-            Log::error('Change password failed', [
-                'error' => $th->getMessage(),
+            $user->update([
+                'password' => $newPassword,
             ]);
-
-            return false;
+        } catch (\Throwable $e) {
+            throw ProfileException::passwordChangeFailed($user->id, $e);
         }
     }
 
     /**
      * Delete user account
      */
-    public function deleteAccount(
-        User $user,
-    ): bool {
+    public function deleteAccount(User $user): void
+    {
         try {
-            Auth::guard('web')->logout();
+            $user->assignedTasks()->update(['assigned_to' => null]);
 
-            session()->invalidate();
-            session()->regenerateToken();
+            $this->avatarService->deleteImageDirectory($user);
 
             $user->delete();
-
-            return true;
-        } catch (\Throwable $th) {
-            Log::error('Delete account failed', [
-                'error' => $th->getMessage(),
-            ]);
-
-            return false;
+        } catch (\Throwable $e) {
+            throw ProfileException::accountDeleteFailed($user->id, $e);
         }
     }
 }

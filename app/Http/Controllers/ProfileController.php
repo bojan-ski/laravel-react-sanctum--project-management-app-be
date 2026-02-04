@@ -4,10 +4,12 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
 use App\Http\Requests\Profile\AvatarRequest;
 use App\Http\Requests\Profile\ChangePasswordRequest;
 use App\Http\Requests\Profile\DeleteAccountRequest;
+use App\Http\Resources\UserResource;
+use App\Exceptions\ProfileException;
 use App\Services\ProfileService;
 use App\Traits\ApiResponse;
 
@@ -15,28 +17,43 @@ class ProfileController extends Controller
 {
     use ApiResponse;
 
-    public function __construct(private ProfileService $profileService) {}
+    public function __construct(protected readonly ProfileService $profileService) {}
+
+    /**
+     * Get current user profile
+     */
+    public function show(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        return $this->success(
+            message: 'Profile retrieved successfully',
+            data: new UserResource($user)
+        );
+    }
 
     /**
      * Upload user avatar
      */
     public function uploadAvatar(AvatarRequest $request): JsonResponse
     {
-        $user = $request->user();
-        $avatar = $request->file('avatar');
+        try {
+            $updatedUser = $this->profileService->updateProfile(
+                user: $request->user(),
+                avatar: $request->file('avatar')
+            );
 
-        // call profile service
-        $updatedUser = $this->profileService->uploadAvatar(
-            $user,
-            $avatar
-        );
-
-        // return json
-        if (!$updatedUser) {
-            return $this->error('Failed to upload avatar!', 500);
+            return $this->success(
+                message: 'Avatar updated',
+                data: new UserResource($updatedUser)
+            );
+        } catch (ProfileException $e) {
+            $e->report();
+            return $this->error(
+                message: $e->getMessage(),
+                statusCode: $e->getStatusCode()
+            );
         }
-
-        return $this->success($updatedUser, 'Avatar updated');
     }
 
     /**
@@ -44,50 +61,52 @@ class ProfileController extends Controller
      */
     public function changePassword(ChangePasswordRequest $request): JsonResponse
     {
-        $user = $request->user();
-        $formData = $request->validated();
+        try {
+            $this->profileService->validateUserPassword(
+                user: $request->user(),
+                oldPassword: $request->validated('old_password')
+            );
 
-        // check password
-        if (!Hash::check($formData['old_password'], $user->password)) {
-            return $this->error('Wrong password', 400);
-        };
+            $this->profileService->changePassword(
+                user: $request->user(),
+                newPassword: $request->validated('new_password')
+            );
 
-        // call profile service
-        $response = $this->profileService->changePassword(
-            $request->user(),
-            $formData['new_password']
-        );
-
-        // return json
-        if (!$response) {
-            return $this->error('Failed to change password!', 500);
+            return $this->success(message: 'Password changed successfully');
+        } catch (ProfileException $e) {
+            $e->report();
+            return $this->error(
+                message: $e->getMessage(),
+                statusCode: $e->getStatusCode()
+            );
         }
-
-        return $this->success(null, 'Password changed successfully');
     }
 
     /**
      * Delete user account
      */
-    public function deleteAccount(DeleteAccountRequest $request): JsonResponse
+    public function destroy(DeleteAccountRequest $request): JsonResponse
     {
-        $user = $request->user();
+        try {
+            $this->profileService->validateUserPassword(
+                user: $request->user(),
+                oldPassword: $request->validated('password')
+            );
 
-        // check password
-        if (!Hash::check($request->password, $user->password)) {
-            return $this->error('Password incorrect!', 400);
+            Auth::guard('web')->logout();
+
+            session()->invalidate();
+            session()->regenerateToken();
+
+            $this->profileService->deleteAccount($request->user());
+
+            return $this->success(message: 'Your account has been deleted');
+        } catch (ProfileException $e) {
+            $e->report();
+            return $this->error(
+                message: $e->getMessage(),
+                statusCode: $e->getStatusCode()
+            );
         }
-
-        // call profile service
-        $response = $this->profileService->deleteAccount(
-            $user
-        );
-
-        // return json
-        if (!$response) {
-            return $this->error('Failed to delete account!', 500);
-        }
-
-        return $this->success(null, 'Your account has been deleted');
     }
 }

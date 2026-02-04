@@ -19,8 +19,10 @@ class AuthException extends Exception
         private readonly ?string $email = null,
         string $message = 'Auth error',
         int $code = 0,
+        private readonly string $type = self::TYPE_GENERAL,
+        private readonly int $statusCode = 400,
+        private readonly string $logLevel = 'error',
         ?Throwable $previous = null,
-        private readonly string $type = self::TYPE_GENERAL
     ) {
         parent::__construct($message, $code, $previous);
     }
@@ -36,6 +38,8 @@ class AuthException extends Exception
             email: $email,
             message: 'Invalid credentials!',
             type: self::TYPE_INVALID_CREDENTIALS,
+            statusCode: 401,
+            logLevel: 'warning',
             previous: $previous,
         );
     }
@@ -49,10 +53,20 @@ class AuthException extends Exception
     ): self {
         return new self(
             email: $email,
-            message: 'Failed to logout. Please try again.',
+            message: 'Failed to logout!',
             type: self::TYPE_LOGOUT_FAILED,
+            statusCode: 500,
+            logLevel: 'error',
             previous: $previous,
         );
+    }
+
+    /**
+     * Get HTTP status code
+     */
+    public function getStatusCode(): int
+    {
+        return $this->statusCode;
     }
 
     /**
@@ -67,8 +81,8 @@ class AuthException extends Exception
             'email' => $this->email,
         ]);
 
-        $level = $this->type === self::TYPE_INVALID_CREDENTIALS ? 'warning' : 'error';
+        $logLevel = $this->logLevel;
 
-        Log::$level('Auth error', $context);
+        Log::$logLevel('Auth error', $context);
     }
 }
