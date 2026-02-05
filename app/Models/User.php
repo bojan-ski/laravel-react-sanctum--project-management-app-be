@@ -11,6 +11,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use App\Enums\UserRole;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class User extends Authenticatable
 {
@@ -26,7 +27,6 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-        'avatar',
         'role',
     ];
 
@@ -63,6 +63,12 @@ class User extends Authenticatable
     public function isUser(): bool
     {
         return $this->role === UserRole::USER;
+    }
+
+    // get user avatar
+    public function avatar(): HasOne
+    {
+        return $this->hasOne(Avatar::class);
     }
 
     // user owned projects

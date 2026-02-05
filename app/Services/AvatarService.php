@@ -7,7 +7,8 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Intervention\Image\ImageManager;
 use Intervention\Image\Drivers\Gd\Driver;
-use App\Exceptions\ProfileException;
+use App\Exceptions\AvatarException;
+use App\Models\Avatar;
 use App\Models\User;
 
 class AvatarService
@@ -20,16 +21,29 @@ class AvatarService
     private const MIN_QUALITY = 30;
 
     /**
+     * Delete user avatar/image path
+     */
+    private function deleteAvatarPath(Avatar $avatar): void
+    {
+        try {
+            Storage::disk('public')->delete($avatar->avatar_path);
+
+            $avatar->delete();
+        } catch (\Throwable $e) {
+            throw AvatarException::avatarDeleteFailed($avatar->id, $e);
+        }
+    }
+
+    /**
      * Process and store user avatar/image
      */
     private function processAndStoreUserAvatar(
         UploadedFile $file,
-        int $userId
+        string $directory,
+        string $filename,
     ): string {
         try {
             // create path for avatar
-            $directory = "avatars/{$userId}";
-            $filename = Str::uuid() . '.' . $file->extension();
             $avatarPath = "{$directory}/{$filename}";
 
             // initialize ImageManager with GD driver
@@ -76,49 +90,68 @@ class AvatarService
                 unlink($tempPath);
             }
 
-            throw ProfileException::avatarProcessFailed($userId, $e);
+            throw AvatarException::avatarProcessFailed($file->getClientOriginalName(), $e);
+        }
+    }
+
+    /**
+     * Process and store user avatar/image
+     */
+    private function processAndSaveUserAvatar(
+        UploadedFile $file,
+        int $userId
+    ): void {
+        try {
+            $directory = "avatars/{$userId}";
+            $filename = Str::uuid() . '.' . $file->extension();
+
+            $path = $this->processAndStoreUserAvatar(
+                $file,
+                $directory,
+                $filename
+            );
+
+            Avatar::create([
+                'user_id' => $userId,
+                'filename' => $filename,
+                'avatar_path' => $path
+            ]);
+        } catch (\Throwable $e) {
+            throw AvatarException::avatarProcessFailed($file->getClientOriginalName(), $e);
         }
     }
 
     /**
      * Upload user avatar
      */
-    public function uploadAvatar(
+    public function processUserAvatar(
         User $user,
         UploadedFile $avatar
-    ): string {
+    ): void {
         try {
             if ($user->avatar) {
-                $this->deleteImagePath($user);
+                $this->deleteAvatarPath($user->avatar);
             }
 
-            return $this->processAndStoreUserAvatar($avatar, $user->id);
+            $this->processAndSaveUserAvatar($avatar, $user->id);
         } catch (\Throwable $e) {
-            throw ProfileException::avatarUploadFailed($user->id, $e);
-        }
-    }
-
-    /**
-     * Delete user avatar/image path
-     */
-    public function deleteImagePath(User $user): void
-    {
-        try {
-            Storage::disk('public')->delete($user->avatar);
-        } catch (\Throwable $e) {
-            throw ProfileException::avatarDeleteFailed($user->id, $e);
+            throw AvatarException::avatarUploadFailed($user->id, $e);
         }
     }
 
     /**
      * Delete user avatar/image directory
      */
-    public function deleteImageDirectory(User $user): void
+    public function deleteAvatarDirectory(User $user): void
     {
+        $avatar = $user->avatar;
+
         try {
+            $this->deleteAvatarPath($avatar);
+
             Storage::disk('public')->deleteDirectory("avatars/{$user->id}");
         } catch (\Throwable $e) {
-            throw ProfileException::avatarDeleteFailed($user->id, $e);
+            throw AvatarException::avatarDeleteFailed($avatar->id, $e);
         }
     }
 }

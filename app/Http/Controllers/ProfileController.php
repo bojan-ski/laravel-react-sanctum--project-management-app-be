@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
-use App\Http\Requests\Profile\AvatarRequest;
 use App\Http\Requests\Profile\ChangePasswordRequest;
 use App\Http\Requests\Profile\DeleteAccountRequest;
 use App\Http\Resources\UserResource;
@@ -30,30 +29,6 @@ class ProfileController extends Controller
             message: 'Profile retrieved successfully',
             data: new UserResource($user)
         );
-    }
-
-    /**
-     * Upload user avatar
-     */
-    public function uploadAvatar(AvatarRequest $request): JsonResponse
-    {
-        try {
-            $updatedUser = $this->profileService->updateProfile(
-                user: $request->user(),
-                avatar: $request->file('avatar')
-            );
-
-            return $this->success(
-                message: 'Avatar updated',
-                data: new UserResource($updatedUser)
-            );
-        } catch (ProfileException $e) {
-            $e->report();
-            return $this->error(
-                message: $e->getMessage(),
-                statusCode: $e->getStatusCode()
-            );
-        }
     }
 
     /**

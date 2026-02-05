@@ -17,6 +17,7 @@ use App\Http\Controllers\Admin\UserController;
 
 require __DIR__ . '/auth.php';
 require __DIR__ . '/profile.php';
+require __DIR__ . '/avatar.php';
 
 // Regular user routes
 Route::middleware(['auth:sanctum', IsRegularUserMiddleware::class])->group(function () {

@@ -6,19 +6,21 @@ use Illuminate\Support\Facades\Log;
 use Throwable;
 use Exception;
 
-class ProfileException extends Exception
+class AvatarException extends Exception
 {
-    public const TYPE_GENERAL = 'profile_feature_error';
-    public const TYPE_PASSWORD_INCORRECT = 'password_incorrect';
-    public const TYPE_PASSWORD_CHANGE_FAILED = 'password_change_failed';
-    public const TYPE_ACCOUNT_DELETE_FAILED = 'account_delete_failed';
+    public const TYPE_GENERAL = 'avatar_feature_error';
+    public const TYPE_AVATAR_UPLOAD_FAILED = 'avatar_upload_failed';
+    public const TYPE_AVATAR_PROCESS_FAILED = 'avatar_process_failed';
+    public const TYPE_AVATAR_DELETE_FAILED = 'avatar_delete_failed';
 
     /**
      * Create a new exception instance
      */
     public function __construct(
         private readonly ?int $userId = null,
-        string $message = 'Profile error',
+        private readonly ?string $filename = null,
+        private readonly ?int $avatarId = null,
+        string $message = 'Avatar error',
         int $code = 0,
         private readonly string $type = self::TYPE_GENERAL,
         private readonly int $statusCode = 500,
@@ -29,31 +31,16 @@ class ProfileException extends Exception
     }
 
     /**
-     * Current password is incorrect
+     * Avatar upload failed
      */
-    public static function passwordIncorrect(
-        ?int $userId = null,
-    ): self {
-        return new self(
-            userId: $userId,
-            message: 'Password is incorrect!',
-            type: self::TYPE_PASSWORD_INCORRECT,
-            statusCode: 401,
-            logLevel: 'warning',
-        );
-    }
-
-    /**
-     * Password change failed
-     */
-    public static function passwordChangeFailed(
+    public static function avatarUploadFailed(
         ?int $userId = null,
         ?Throwable $previous = null,
     ): self {
         return new self(
             userId: $userId,
-            message: 'Failed to change password!',
-            type: self::TYPE_PASSWORD_CHANGE_FAILED,
+            message: 'Failed to upload avatar!',
+            type: self::TYPE_AVATAR_UPLOAD_FAILED,
             statusCode: 500,
             logLevel: 'error',
             previous: $previous,
@@ -61,16 +48,33 @@ class ProfileException extends Exception
     }
 
     /**
-     * Account deletion failed
+     * Avatar processing failed
      */
-    public static function accountDeleteFailed(
-        ?int $userId = null,
+    public static function avatarProcessFailed(
+        ?string $filename = null,
         ?Throwable $previous = null,
     ): self {
         return new self(
-            userId: $userId,
-            message: 'Failed to delete account!',
-            type: self::TYPE_ACCOUNT_DELETE_FAILED,
+            filename: $filename,
+            message: 'Failed to process avatar image!',
+            type: self::TYPE_AVATAR_PROCESS_FAILED,
+            statusCode: 422,
+            logLevel: 'warning',
+            previous: $previous,
+        );
+    }
+
+    /**
+     * Avatar deletion failed
+     */
+    public static function avatarDeleteFailed(
+        ?int $avatarId = null,
+        ?Throwable $previous = null,
+    ): self {
+        return new self(
+            avatarId: $avatarId,
+            message: 'Failed to delete old avatar!',
+            type: self::TYPE_AVATAR_DELETE_FAILED,
             statusCode: 500,
             logLevel: 'error',
             previous: $previous,
@@ -94,11 +98,13 @@ class ProfileException extends Exception
             'type' => $this->type,
             'message' => $this->getMessage(),
             'user_id' => $this->userId,
+            'filename' => $this->filename,
+            'avatar_id' => $this->avatarId,
             'previous' => $this->getPrevious()?->getMessage(),
         ]);
 
         $logLevel = $this->logLevel;
 
-        Log::$logLevel('Auth error', $context);
+        Log::$logLevel('Avatar error', $context);
     }
 }

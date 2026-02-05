@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
 use App\Exceptions\ProfileException;
 use App\Models\User;
@@ -10,29 +9,6 @@ use App\Models\User;
 class ProfileService
 {
     public function __construct(protected readonly AvatarService $avatarService) {}
-
-    /**
-     * Update user profile
-     */
-    public function updateProfile(
-        User $user,
-        UploadedFile $avatar
-    ): User {
-        try {
-            $user->avatar = $this->avatarService->uploadAvatar(
-                $user,
-                $avatar
-            );
-            $user->save();
-
-            return $user->fresh();
-        } catch (\Throwable $e) {
-            throw new ProfileException(
-                userId: $user->id,
-                previous: $e,
-            );
-        }
-    }
 
     /**
      * Validate user password
@@ -70,7 +46,9 @@ class ProfileService
         try {
             $user->assignedTasks()->update(['assigned_to' => null]);
 
-            $this->avatarService->deleteImageDirectory($user);
+            if($user->avatar){
+                $this->avatarService->deleteAvatarDirectory($user);
+            }
 
             $user->delete();
         } catch (\Throwable $e) {
