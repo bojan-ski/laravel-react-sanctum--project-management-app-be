@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\JsonResponse;
 use App\Http\Requests\Auth\LoginRequest;
-use App\Http\Resources\UserResource;
+use App\Http\Resources\AuthResource;
 use App\Exceptions\AuthException;
 use App\Services\AuthService;
 use App\Traits\ApiResponse;
@@ -27,7 +27,7 @@ class AuthController extends Controller
 
             return $this->success(
                 message: 'Login successful',
-                data: new UserResource($user),
+                data: new AuthResource($user),
             );
         } catch (AuthException $e) {
             $e->report();

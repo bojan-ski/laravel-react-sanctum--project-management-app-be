@@ -29,10 +29,7 @@ class AvatarController extends Controller
                 $avatar
             );
 
-            return $this->success(
-                message: 'Avatar updated',
-                data: new UserResource($user)
-            );
+            return $this->success(message: 'Avatar updated');
         } catch (AvatarException $e) {
             $e->report();
             return $this->error(
