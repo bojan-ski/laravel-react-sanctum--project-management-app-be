@@ -2,27 +2,27 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
-use App\Http\Requests\Project\FilterRequest;
+use App\Http\Requests\Project\FilterProjectsRequest;
 use App\Http\Requests\Project\ProjectRequest;
-use App\Http\Requests\Project\StatusRequest;
+use App\Http\Requests\Project\UpdateProjectStatusRequest;
 use App\Http\Resources\ProjectCardResource;
 use App\Http\Resources\ProjectResource;
+use App\Exceptions\ProjectException;
 use App\Services\ProjectService;
-use App\Models\Project;
 use App\Traits\ApiResponse;
+use App\Models\Project;
 
 class ProjectController extends Controller
 {
     use ApiResponse;
 
-    public function __construct(private ProjectService $projectService) {}
+    public function __construct(protected readonly ProjectService $projectService) {}
 
     /**
      * Display a listing of the resource.
      */
-    public function index(FilterRequest $request): JsonResponse
+    public function index(FilterProjectsRequest $request): JsonResponse
     {
         $filters = $request->validated();
 
@@ -30,16 +30,20 @@ class ProjectController extends Controller
         $status = $filters['status'] ?? 'all';
 
         $projects = $this->projectService->getUserProjects(
-            $request->user(),
-            $ownership,
-            $status
+            user: $request->user(),
+            ownership: $ownership,
+            status: $status,
+            perPage: 12
         );
 
         $projects->setCollection(
             ProjectCardResource::collection($projects)->collection
         );
 
-        return $this->success($projects, 'Projects retrieved');
+        return $this->success(
+            message: 'Projects retrieved',
+            data: $projects
+        );
     }
 
     /**
@@ -48,19 +52,21 @@ class ProjectController extends Controller
     // Run php artisan storage:link to create a symbolic link from public/storage to storage/app/public
     public function store(ProjectRequest $request): JsonResponse
     {
-        $file = $request->file('document_path');
+        try {
+            $this->projectService->createProject(
+                user: $request->user(),
+                formData: $request->validated(),
+                file: $request->file('document_path') ?? null
+            );
 
-        $response = $this->projectService->createProject(
-            $request->user(),
-            $request->validated(),
-            $file
-        );
-
-        if (!$response) {
-            return $this->error('Failed to create project!', 500);
+            return $this->success(message: 'Project created');
+        } catch (ProjectException $e) {
+            $e->report();
+            return $this->error(
+                message: $e->getMessage(),
+                statusCode: $e->getStatusCode()
+            );
         }
-
-        return $this->success(null, 'Project created', 201);
     }
 
     /**
@@ -71,8 +77,8 @@ class ProjectController extends Controller
         $project = $this->projectService->getProjectDetails($project);
 
         return $this->success(
-            new ProjectResource($project),
-            'Project details retrieved'
+            message: 'Project details retrieved',
+            data: new ProjectResource($project)
         );
     }
 
@@ -81,7 +87,10 @@ class ProjectController extends Controller
      */
     public function edit(Project $project): JsonResponse
     {
-        return $this->success($project, 'Project data retrieved');
+        return $this->success(
+            message: 'Project data retrieved',
+            data: $project
+        );
     }
 
     /**
@@ -91,40 +100,50 @@ class ProjectController extends Controller
         ProjectRequest $request,
         Project $project
     ): JsonResponse {
-        $file = $request->hasFile('document_path') ? $request->file('document_path') : null;
+        try {
+            $updatedProject = $this->projectService->updateProject(
+                project: $project,
+                formData: $request->validated(),
+                file: $request->file('document_path') ?? null
+            );
 
-        $updatedProject = $this->projectService->updateProject(
-            $project,
-            $request->validated(),
-            $file
-        );
-
-        if (!$updatedProject) {
-            return $this->error('Failed to update project!', 500);
+            return $this->success(
+                message: 'Project updated',
+                data: new ProjectResource($updatedProject)
+            );
+        } catch (ProjectException $e) {
+            $e->report();
+            return $this->error(
+                message: $e->getMessage(),
+                statusCode: $e->getStatusCode()
+            );
         }
-
-        return $this->success($updatedProject, 'Project updated', 201);
     }
 
     /**
      * Change project status to completed or cancelled
      */
     public function status(
-        StatusRequest $request,
+        UpdateProjectStatusRequest $request,
         Project $project
     ): JsonResponse {
-        $status = $request->validated()['status'];
+        try {
+            $updatedProject = $this->projectService->statusChange(
+                project: $project,
+                status: $request->validated('status'),
+            );
 
-        $updatedProject = $this->projectService->statusChange(
-            $status,
-            $project,
-        );
-
-        if (!$updatedProject) {
-            return $this->error('Failed to change project status!', 500);
+            return $this->success(
+                message: 'Project status updated',
+                data: new ProjectResource($updatedProject)
+            );
+        } catch (ProjectException $e) {
+            $e->report();
+            return $this->error(
+                message: $e->getMessage(),
+                statusCode: $e->getStatusCode()
+            );
         }
-
-        return $this->success($updatedProject, 'Project status updated', 201);
     }
 
     /**
@@ -132,12 +151,16 @@ class ProjectController extends Controller
      */
     public function destroy(Project $project): JsonResponse
     {
-        $response = $this->projectService->deleteProject($project);
+        try {
+            $this->projectService->deleteProject($project);
 
-        if (!$response) {
-            return $this->error('Delete project error!', 500);
+            return $this->success(message: 'Project deleted');
+        } catch (ProjectException $e) {
+            $e->report();
+            return $this->error(
+                message: $e->getMessage(),
+                statusCode: $e->getStatusCode()
+            );
         }
-
-        return $this->success(null, 'Project deleted');
     }
 }

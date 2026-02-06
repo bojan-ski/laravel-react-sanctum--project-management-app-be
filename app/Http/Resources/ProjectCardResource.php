@@ -8,6 +8,20 @@ use Illuminate\Http\Resources\Json\JsonResource;
 class ProjectCardResource extends JsonResource
 {
     /**
+     * Truncate description
+     */
+    private function truncateDescription(
+        string $description,
+        int $length
+    ): string {
+        if (strlen($description) <= $length) {
+            return $description;
+        }
+
+        return substr($description, 0, $length) . '...';
+    }
+
+    /**
      * Transform the resource into an array.
      *
      * @return array<string, mixed>
@@ -17,7 +31,9 @@ class ProjectCardResource extends JsonResource
         return [
             'id' => $this->id,
             'title' => $this->title,
-            'description' => $this->description,
+            // 'description' => $this->description,
+            'description' => $this->truncateDescription($this->description, 150),
+            'status' => $this->status,
             'deadline' => $this->deadline?->format('Y-m-d'),
             'owner' => [
                 'name' => $this->owner->name,

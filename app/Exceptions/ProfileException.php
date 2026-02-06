@@ -99,6 +99,6 @@ class ProfileException extends Exception
 
         $logLevel = $this->logLevel;
 
-        Log::$logLevel('Auth error', $context);
+        Log::$logLevel('Profile error', $context);
     }
 }

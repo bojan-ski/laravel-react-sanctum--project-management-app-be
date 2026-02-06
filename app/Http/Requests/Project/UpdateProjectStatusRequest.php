@@ -5,8 +5,10 @@ namespace App\Http\Requests\Project;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Validation\Rule;
+use App\Enums\ProjectStatus;
 
-class ProjectRequest extends FormRequest
+class UpdateProjectStatusRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -38,10 +40,7 @@ class ProjectRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'title' => 'required|string|max:64',
-            'description' => 'required|string|max:3000',
-            'deadline' => 'required|date|after_or_equal:today',
-            'document_path' => 'nullable|file|mimes:pdf,doc,docx|max:1024'
+            'status' => ['required', 'string', Rule::in([...ProjectStatus::values()])],
         ];
     }
 }

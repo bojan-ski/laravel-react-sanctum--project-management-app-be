@@ -2,18 +2,20 @@
 
 namespace App\Services;
 
-use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Pagination\LengthAwarePaginator;
+use App\Exceptions\ProjectException;
 use App\Models\User;
 use App\Models\Project;
 
 class ProjectService
 {
-    public function __construct(private NotificationService $notificationService) {}
+    public function __construct(
+        protected readonly NotificationService $notificationService,
+        protected readonly DocumentService $documentService,
+    ) {}
 
     /**
      * Get user projects with filter feature
@@ -21,11 +23,11 @@ class ProjectService
     public function getUserProjects(
         User $user,
         string $ownership = 'all',
-        string $status = 'all'
+        string $status = 'all',
+        int $perPage = 12
     ): LengthAwarePaginator {
         $query = Project::query();
 
-        // filter by project ownership
         switch ($ownership) {
             case 'owner':
                 $query->where('owner_id', $user->id);
@@ -48,7 +50,6 @@ class ProjectService
                 break;
         }
 
-        // filter by project status
         if ($status !== 'all') {
             $query->where('status', $status);
         }
@@ -56,7 +57,7 @@ class ProjectService
         return $query->with(['owner'])
             ->withCount(['members'])
             ->latest()
-            ->paginate(12);
+            ->paginate($perPage);
     }
 
     /**
@@ -66,37 +67,27 @@ class ProjectService
         User $user,
         array $formData,
         ?UploadedFile $file = null
-    ): bool {
+    ): void {
         try {
             DB::transaction(function () use ($user, $formData, $file) {
-                // if file exists
                 if ($file) {
                     $filePath = $file->store('documents', 'public');
                     $formData['document_path'] = $filePath;
                 }
 
-                // create project
                 $project = Project::create([
-                    // 'owner_id' => $user->id,
                     'title' => $formData['title'],
                     'description' => $formData['description'],
                     'deadline' => $formData['deadline'],
                     'document_path' => $formData['document_path'] ?? null
                 ]);
 
-                // add owner as member
                 $project->members()->attach($user->id, [
                     'joined_at' => now(),
                 ]);
             });
-
-            return true;
-        } catch (\Throwable $th) {
-            Log::error('Project creation failed', [
-                'error' => $th->getMessage()
-            ]);
-
-            return false;
+        } catch (\Throwable $e) {
+            throw ProjectException::createProjectFailed($user->id, $e);
         }
     }
 
@@ -106,9 +97,39 @@ class ProjectService
     public function getProjectDetails(Project $project): Project
     {
         return $project->load([
-            'owner',
-            'members',
-        ])->loadCount(['members']);
+            'owner:id,name,email,avatar',
+            'members:id,name,email,avatar',
+        ])->loadCount(['members', 'tasks']);
+    }
+
+    /**
+     * Notify project members of update
+     */
+    private function notifyMembersOfUpdate(
+        Project $project,
+        User $owner
+    ): void {
+        $members = $project->members()->where('member_id', '!=', $owner->id)->get();
+
+        foreach ($members as $member) {
+            $this->notificationService->projectUpdated(
+                receiver: $member,
+                project: $project,
+                sender: $owner
+            );
+        }
+
+        // $members = $project->members()->get();
+
+        // foreach ($members as $member) {
+        //     if ($member->id !== $owner->id) {
+        //         $this->notificationService->projectUpdated(
+        //             receiver: $member,
+        //             project: $project,
+        //             sender: $owner
+        //         );
+        //     }
+        // }
     }
 
     /**
@@ -118,12 +139,10 @@ class ProjectService
         Project $project,
         array $formData,
         ?UploadedFile $file = null
-    ): ?Project {
+    ): Project {
         try {
             DB::transaction(function () use ($project, $formData, $file) {
-                // if file exists
                 if ($file) {
-                    // if project contains a file, delete from storage
                     if ($project->document_path) {
                         Storage::disk('public')->delete($project->document_path);
                     }
@@ -132,31 +151,14 @@ class ProjectService
                     $formData['document_path'] = $filePath;
                 }
 
-                // send notification
-                $owner = $project->owner;
-                $members = $project->members()->get();
-
-                foreach ($members as $member) {
-                    if ($member->id !== $owner->id) {
-                        $this->notificationService->projectUpdated(
-                            receiver: $member,
-                            project: $project,
-                            sender: $owner
-                        );
-                    }
-                }
-
-                // update project
                 $project->update($formData);
+
+                $this->notifyMembersOfUpdate($project, $project->owner);
             });
 
-            return $project->fresh();
-        } catch (\Throwable $th) {
-            Log::error('Project update failed', [
-                'error' => $th->getMessage()
-            ]);
-
-            return null;
+            return $project->fresh(['owner', 'members']);
+        } catch (\Throwable $e) {
+            throw ProjectException::updateProjectFailed($project->id, $e);
         }
     }
 
@@ -164,76 +166,69 @@ class ProjectService
      * Change project status
      */
     public function statusChange(
-        string $status,
         Project $project,
+        string $status,
     ): ?Project {
         try {
-            DB::transaction(function () use ($project, $status) {
-                // send notification
-                $owner = $project->owner;
-                $members = $project->members()->get();
-
-                foreach ($members as $member) {
-                    if ($member->id !== $owner->id) {
-                        $this->notificationService->projectUpdated(
-                            receiver: $member,
-                            project: $project,
-                            sender: $owner
-                        );
-                    }
-                }
-
-                // change project status
-                $project->update(['status' => $status]);
-            });
-
-            return $project->fresh();
-        } catch (\Throwable $th) {
-            Log::error('Project status change failed', [
-                'error' => $th->getMessage()
+            $project->update([
+                'status' => $status
             ]);
 
-            return null;
+            $this->notifyMembersOfUpdate($project, $project->owner);
+
+            return $project->fresh(['owner', 'members']);
+        } catch (\Throwable $e) {
+            throw ProjectException::changeProjectStatusFailed($project->id);
         }
+    }
+
+    /**
+     * Notify project members of project deletion
+     */
+    private function notifyMembersOfDeletion(
+        Project $project,
+        User $owner
+    ): void {
+        $members = $project->members()->where('member_id', '!=', $owner->id)->get();
+
+        foreach ($members as $member) {
+            $this->notificationService->projectDeleted(
+                receiver: $member,
+                project: $project,
+                sender: $owner
+            );
+        }
+
+        // $members = $project->members()->get();
+
+        // foreach ($members as $member) {
+        //     if ($member->id !== $owner->id) {
+        //         $this->notificationService->projectDeleted(
+        //             receiver: $member,
+        //             project: $project,
+        //             sender: $owner
+        //         );
+        //     }
+        // }
     }
 
     /**
      * Delete project
      */
-    public function deleteProject(Project $project): bool
+    public function deleteProject(Project $project): void
     {
         try {
             DB::transaction(function () use ($project) {
-                // if file, delete from storage
                 if ($project->document_path) {
                     Storage::disk('public')->delete($project->document_path);
                 }
 
-                // send notification
-                $owner = $project->owner;
-                $members = $project->members()->get();
+                $this->notifyMembersOfDeletion($project, $project->owner);
 
-                foreach ($members as $member) {
-                    if ($member->id !== $owner->id) {
-                        $this->notificationService->projectDeleted(
-                            receiver: $member,
-                            project: $project,
-                            sender: $owner
-                        );
-                    }
-                }
-
-                // delete from db 
                 $project->delete();
             });
-
-            return true;
-        } catch (\Throwable $th) {
-            Log::error('Project deletion failed', [
-                'error' => $th->getMessage()
-            ]);
-
-            return false;
+        } catch (\Throwable $e) {
+            throw ProjectException::deleteProjectFailed($project->id, $e);
         }
     }
 }

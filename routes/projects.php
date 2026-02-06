@@ -1,0 +1,35 @@
+<?php
+
+use Illuminate\Support\Facades\Route;
+use App\Http\Middleware\IsRegularUserMiddleware;
+use App\Http\Middleware\IsProjectOwnerMiddleware;
+use App\Http\Middleware\IsProjectMemberMiddleware;
+use App\Http\Controllers\ProjectController;
+
+Route::middleware('auth:sanctum')->prefix('projects')->group(function () {
+    Route::get('/', [ProjectController::class, 'index'])
+        ->name('projects.index');
+
+    Route::middleware(IsRegularUserMiddleware::class)->group(function () {
+        Route::post('/', [ProjectController::class, 'store'])
+            ->name('projects.store');
+
+        Route::middleware(IsProjectOwnerMiddleware::class)->group(function () {
+            Route::get('/{project}/edit', [ProjectController::class, 'edit'])
+                ->name('projects.edit');
+            Route::put('/{project}/update', [ProjectController::class, 'update'])
+                ->name('projects.update');
+
+            // Route::delete('/{project}/delete_file', [DocumentController::class, 'deleteFile']);
+
+            Route::put('/{project}/{status}', [ProjectController::class, 'status'])
+                ->name('projects.status.update');
+            Route::delete('/{project}/destroy', [ProjectController::class, 'destroy'])
+                ->name('projects.destroy');
+        });
+    });
+
+    Route::get('/{project}', [ProjectController::class, 'show'])
+        ->middleware(IsProjectMemberMiddleware::class)
+        ->name('projects.show');
+});

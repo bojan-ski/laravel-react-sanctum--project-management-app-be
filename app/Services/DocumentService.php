@@ -2,13 +2,25 @@
 
 namespace App\Services;
 
-use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Log;
 use App\Models\Project;
 
 class DocumentService
 {
+    /**
+     * Upload project document
+     */
+    public function uploadDocument(
+        UploadedFile $file,
+        ?int $projectId
+    ): string {
+        $directory = "documents/projects/{$projectId}";
+
+        return $file->store($directory, 'public');
+    }
+
+
     /**
      * delete project document
      */

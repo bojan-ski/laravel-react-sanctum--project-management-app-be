@@ -4,11 +4,14 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Response;
+use App\Exceptions\ProjectException;
+use App\Traits\ApiResponse;
 
 class IsProjectMemberMiddleware
 {
+    use ApiResponse;
+
     /**
      * Handle an incoming request.
      *
@@ -16,14 +19,19 @@ class IsProjectMemberMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
-        // get project data
+        $user = $request->user();
         $project = $request->route('project');
 
-        // check if user is project member
-        if ($project && ($project->isMember($request->user()) || Auth::user()->role == 'admin')) return $next($request);
+        if (!$user) return $this->error(message: 'Unauthorized', statusCode: 401);
+        if (!$project) return $this->error(message: 'Not Found', statusCode: 404);
 
-        return response()->json([
-            'message' => 'Access denied: Not project member!'
-        ], 403);
+        if (!$project->isMember($user)) {
+            throw ProjectException::notMember(
+                userId: $user->id,
+                projectId: $project->id,
+            );
+        }
+
+        return $next($request);
     }
 }
