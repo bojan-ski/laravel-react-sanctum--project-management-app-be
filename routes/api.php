@@ -16,27 +16,13 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\Admin\UserController;
 
 require __DIR__ . '/auth.php';
+require __DIR__ . '/projects.php';
+require __DIR__ . '/documents.php';
 require __DIR__ . '/profile.php';
 require __DIR__ . '/avatar.php';
 
 // Regular user routes
 Route::middleware(['auth:sanctum', IsRegularUserMiddleware::class])->group(function () {
-    // project routes
-    Route::prefix('projects')->group(function () {
-        Route::get('/', [ProjectController::class, 'index']);
-        Route::post('/', [ProjectController::class, 'store']);
-
-        Route::middleware(IsProjectOwnerMiddleware::class)->group(function () {
-            Route::get('/{project}/edit', [ProjectController::class, 'edit']);
-            Route::put('/{project}/update', [ProjectController::class, 'update']);
-            Route::delete('/{project}/delete_file', [DocumentController::class, 'deleteFile']);
-            Route::put('/{project}/{status}', [ProjectController::class, 'status']);
-            Route::delete('/{project}/destroy', [ProjectController::class, 'destroy']);
-        });
-
-        Route::get('/{project}', [ProjectController::class, 'show'])->middleware(IsProjectMemberMiddleware::class);
-    });
-
     // project members routes
     Route::middleware(IsProjectOwnerMiddleware::class)
         ->prefix('projects/{project}/members')

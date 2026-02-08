@@ -9,10 +9,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use App\Enums\ProjectStatus;
+use App\Traits\HasDocument;
 
 class Project extends Model
 {
     use HasFactory;
+    use HasDocument;
 
     protected $table = 'projects';
     protected $fillable = [
@@ -21,7 +23,6 @@ class Project extends Model
         'description',
         'status',
         'deadline',
-        'document_path'
     ];
 
     protected $casts = [

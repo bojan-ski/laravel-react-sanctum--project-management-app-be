@@ -5,10 +5,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Traits\HasDocument;
 
 class TaskActivity extends Model
 {
     use HasFactory;
+    use HasDocument;
 
     protected $table = 'task_activities';
     protected $fillable = [
@@ -16,7 +18,6 @@ class TaskActivity extends Model
         'user_id',
         'action',
         'changes',
-        'document_path'
     ];
 
     // related to task

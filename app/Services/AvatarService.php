@@ -10,6 +10,7 @@ use Intervention\Image\Drivers\Gd\Driver;
 use App\Exceptions\AvatarException;
 use App\Models\Avatar;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 
 class AvatarService
 {
@@ -26,9 +27,11 @@ class AvatarService
     private function deleteAvatarPath(Avatar $avatar): void
     {
         try {
-            Storage::disk('public')->delete($avatar->avatar_path);
+            DB::transaction(function () use ($avatar) {
+                Storage::disk('public')->delete($avatar->avatar_path);
 
-            $avatar->delete();
+                $avatar->delete();
+            });
         } catch (\Throwable $e) {
             throw AvatarException::avatarDeleteFailed($avatar->id, $e);
         }

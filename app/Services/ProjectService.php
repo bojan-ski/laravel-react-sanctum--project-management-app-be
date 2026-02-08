@@ -70,10 +70,10 @@ class ProjectService
     ): void {
         try {
             DB::transaction(function () use ($user, $formData, $file) {
-                if ($file) {
-                    $filePath = $file->store('documents', 'public');
-                    $formData['document_path'] = $filePath;
-                }
+                // if ($file) {
+                //     $filePath = $file->store('documents', 'public');
+                //     $formData['document_path'] = $filePath;
+                // }
 
                 $project = Project::create([
                     'title' => $formData['title'],
@@ -85,6 +85,14 @@ class ProjectService
                 $project->members()->attach($user->id, [
                     'joined_at' => now(),
                 ]);
+
+                if ($file) {
+                    $this->documentService->uploadDocument(
+                        uploader: $user,
+                        documentable: $project,
+                        file: $file
+                    );
+                }
             });
         } catch (\Throwable $e) {
             throw ProjectException::createProjectFailed($user->id, $e);
@@ -143,12 +151,22 @@ class ProjectService
         try {
             DB::transaction(function () use ($project, $formData, $file) {
                 if ($file) {
-                    if ($project->document_path) {
-                        Storage::disk('public')->delete($project->document_path);
+                    // if ($project->document_path) {
+                    //     Storage::disk('public')->delete($project->document_path);
+                    // }
+
+                    // $filePath = $file->store('documents', 'public');
+                    // $formData['document_path'] = $filePath;
+
+                    if ($project->hasDocument()) {
+                        $this->documentService->deleteDocumentPath($project->document);
                     }
 
-                    $filePath = $file->store('documents', 'public');
-                    $formData['document_path'] = $filePath;
+                    $this->documentService->uploadDocument(
+                        uploader: $project->owner,
+                        documentable: $project,
+                        file: $file
+                    );
                 }
 
                 $project->update($formData);
@@ -219,8 +237,12 @@ class ProjectService
     {
         try {
             DB::transaction(function () use ($project) {
-                if ($project->document_path) {
-                    Storage::disk('public')->delete($project->document_path);
+                // if ($project->document_path) {
+                //     Storage::disk('public')->delete($project->document_path);
+                // }
+
+                if ($project->hasDocument()) {
+                    $this->documentService->deleteDocument($project->document);
                 }
 
                 $this->notifyMembersOfDeletion($project, $project->owner);

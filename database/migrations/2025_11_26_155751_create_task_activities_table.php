@@ -14,10 +14,9 @@ return new class extends Migration
         Schema::create('task_activities', function (Blueprint $table) {
             $table->id();
             $table->foreignId('task_id')->constrained('tasks')->onDelete('cascade');
-            $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('set null');
+            $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
             $table->string('action');
             $table->text('changes');
-            $table->string('document_path')->nullable();
             $table->timestamps();
 
             $table->index('task_id');

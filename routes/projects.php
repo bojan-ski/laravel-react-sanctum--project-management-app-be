@@ -9,7 +9,6 @@ use App\Http\Controllers\ProjectController;
 Route::middleware('auth:sanctum')->prefix('projects')->group(function () {
     Route::get('/', [ProjectController::class, 'index'])
         ->name('projects.index');
-
     Route::middleware(IsRegularUserMiddleware::class)->group(function () {
         Route::post('/', [ProjectController::class, 'store'])
             ->name('projects.store');
@@ -19,9 +18,6 @@ Route::middleware('auth:sanctum')->prefix('projects')->group(function () {
                 ->name('projects.edit');
             Route::put('/{project}/update', [ProjectController::class, 'update'])
                 ->name('projects.update');
-
-            // Route::delete('/{project}/delete_file', [DocumentController::class, 'deleteFile']);
-
             Route::put('/{project}/{status}', [ProjectController::class, 'status'])
                 ->name('projects.status.update');
             Route::delete('/{project}/destroy', [ProjectController::class, 'destroy'])

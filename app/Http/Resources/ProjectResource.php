@@ -20,7 +20,7 @@ class ProjectResource extends JsonResource
             'description' => $this->description,
             'status' => $this->status,
             'deadline' => $this->deadline?->format('Y-m-d'),
-            'document_path' => $this->document_path,
+            'document_path' => $this->document->full_document_url,
             'owner' => [
                 'id' => $this->owner->id,
                 'name' => $this->owner->name,

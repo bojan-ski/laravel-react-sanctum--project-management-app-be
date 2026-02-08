@@ -2,31 +2,33 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
-use App\Models\Project;
+use App\Exceptions\DocumentException;
 use App\Services\DocumentService;
 use App\Traits\ApiResponse;
+use App\Models\Document;
 
 class DocumentController extends Controller
 {
     use ApiResponse;
 
-    public function __construct(private DocumentService $documentService) {}
+    public function __construct(protected readonly DocumentService $documentService) {}
 
     /**
      * Remove the specified resource from storage.
      */
-    public function deleteFile(Project $project): JsonResponse
+    public function destroy(Document $document): JsonResponse
     {
-        // call project service
-        $response = $this->documentService->deleteProjectDocument($project);
+        try {
+            $this->documentService->deleteDocument($document);
 
-        // return json
-        if (!$response) {
-            return $this->error('Delete project document error!', 500);
+            return $this->success(message: 'Document deleted');
+        } catch (DocumentException $e) {
+            $e->report();
+            return $this->error(
+                message: $e->getMessage(),
+                statusCode: $e->getStatusCode()
+            );
         }
-
-        return $this->success(null, 'Project document deleted');
     }
 }

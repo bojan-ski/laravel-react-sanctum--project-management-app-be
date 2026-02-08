@@ -9,6 +9,7 @@ use App\Http\Requests\Project\UpdateProjectStatusRequest;
 use App\Http\Resources\ProjectCardResource;
 use App\Http\Resources\ProjectResource;
 use App\Exceptions\ProjectException;
+use App\Exceptions\DocumentException;
 use App\Services\ProjectService;
 use App\Traits\ApiResponse;
 use App\Models\Project;
@@ -66,6 +67,12 @@ class ProjectController extends Controller
                 message: $e->getMessage(),
                 statusCode: $e->getStatusCode()
             );
+        } catch (DocumentException $e) {
+            $e->report();
+            return $this->error(
+                message: $e->getMessage(),
+                statusCode: $e->getStatusCode()
+            );
         }
     }
 
@@ -117,6 +124,12 @@ class ProjectController extends Controller
                 message: $e->getMessage(),
                 statusCode: $e->getStatusCode()
             );
+        } catch (DocumentException $e) {
+            $e->report();
+            return $this->error(
+                message: $e->getMessage(),
+                statusCode: $e->getStatusCode()
+            );
         }
     }
 
@@ -156,6 +169,12 @@ class ProjectController extends Controller
 
             return $this->success(message: 'Project deleted');
         } catch (ProjectException $e) {
+            $e->report();
+            return $this->error(
+                message: $e->getMessage(),
+                statusCode: $e->getStatusCode()
+            );
+        } catch (DocumentException $e) {
             $e->report();
             return $this->error(
                 message: $e->getMessage(),

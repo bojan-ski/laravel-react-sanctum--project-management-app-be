@@ -15,7 +15,6 @@ class ProjectException extends Exception
     public const TYPE_NOT_OWNER = 'not_owner';
     public const TYPE_NOT_MEMBER = 'not_member';
     public const TYPE_INVALID_STATUS_CHANGE = 'invalid_status_change';
-    public const TYPE_DOCUMENT_UPLOAD_FAILED = 'document_upload_failed';
 
     /**
      * Create a new exception instance
@@ -130,25 +129,6 @@ class ProjectException extends Exception
             type: self::TYPE_INVALID_STATUS_CHANGE,
             statusCode: 422,
             logLevel: 'error',
-        );
-    }
-
-    /**
-     * Upload project document failed
-     */
-    public static function uploadDocumentFailed(
-        ?int $userId = null,
-        ?int $projectId = null,
-        ?Throwable $previous = null,
-    ): self {
-        return new self(
-            userId: $userId,
-            projectId: $projectId,
-            message: 'Failed to upload project document!',
-            type: self::TYPE_DOCUMENT_UPLOAD_FAILED,
-            statusCode: 500,
-            logLevel: 'error',
-            previous: $previous,
         );
     }
 

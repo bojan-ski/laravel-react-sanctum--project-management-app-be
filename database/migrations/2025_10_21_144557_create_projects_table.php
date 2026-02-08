@@ -18,7 +18,6 @@ return new class extends Migration
             $table->text('description');
             $table->enum('status', ["pending", "active", "completed", "closed"])->default('pending');
             $table->date('deadline');
-            $table->string('document_path')->nullable();
             $table->timestamps();
 
             $table->index('owner_id');
