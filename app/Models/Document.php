@@ -40,4 +40,22 @@ class Document extends Model
     {
         return Storage::disk('public')->path($this->doc_path);
     }
+
+    public function canView(User $user): bool
+    {
+        if ($user->isAdmin()) return true;
+
+        $documentable = $this->documentable;
+
+        if ($documentable instanceof Project) return $documentable->isMember($user);
+
+        if ($documentable instanceof TaskActivity) return $documentable->task->project->isMember($user);
+
+        return false;
+    }
+
+    public function canDelete(User $user): bool
+    {
+        return $this->uploaded_by === $user->id;
+    }
 }

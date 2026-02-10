@@ -11,6 +11,8 @@ class DocumentException extends Exception
     public const TYPE_GENERAL = 'document_feature_error';
     public const TYPE_DOCUMENT_UPLOAD_FAILED = 'document_upload_failed';
     public const TYPE_DOCUMENT_DELETE_FAILED = 'document_delete_failed';
+    public const TYPE_CANNOT_VIEW = 'cannot_view';
+    public const TYPE_CANNOT_DELETE = 'cannot_delete';
 
     /**
      * Create a new exception instance
@@ -19,6 +21,7 @@ class DocumentException extends Exception
         private readonly ?string $documentableType = null,
         private readonly ?int $documentableId = null,
         private readonly ?int $documentId = null,
+        private readonly ?int $userId = null,
         string $message = 'Document error',
         int $code = 0,
         private readonly string $type = self::TYPE_GENERAL,
@@ -27,6 +30,40 @@ class DocumentException extends Exception
         ?Throwable $previous = null,
     ) {
         parent::__construct($message, $code, $previous);
+    }
+
+    /**
+     * User has no permission to view document
+     */
+    public static function cannotView(
+        ?string $documentId = null,
+        ?int $userId = null,
+    ): self {
+        return new self(
+            documentId: $documentId,
+            userId: $userId,
+            message: 'You do not have permission to view this document!',
+            type: self::TYPE_DOCUMENT_UPLOAD_FAILED,
+            statusCode: 403,
+            logLevel: 'warning',
+        );
+    }
+
+    /**
+     * User has no permission to delete document
+     */
+    public static function cannotDelete(
+        ?string $documentId = null,
+        ?int $userId = null,
+    ): self {
+        return new self(
+            documentId: $documentId,
+            userId: $userId,
+            message: 'You do not have permission to delete this document!',
+            type: self::TYPE_CANNOT_DELETE,
+            statusCode: 403,
+            logLevel: 'warning',
+        );
     }
 
     /**
@@ -84,6 +121,7 @@ class DocumentException extends Exception
             'documentable_type' => $this->documentableType,
             'documentable_id' => $this->documentableId,
             'document_id' => $this->documentId,
+            'user_id' => $this->userId,
             'previous' => $this->getPrevious()?->getMessage(),
         ]);
 

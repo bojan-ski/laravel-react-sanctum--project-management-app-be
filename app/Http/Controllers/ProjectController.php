@@ -7,6 +7,7 @@ use App\Http\Requests\Project\FilterProjectsRequest;
 use App\Http\Requests\Project\ProjectRequest;
 use App\Http\Requests\Project\UpdateProjectStatusRequest;
 use App\Http\Resources\ProjectCardResource;
+use App\Http\Resources\ProjectDataResource;
 use App\Http\Resources\ProjectResource;
 use App\Exceptions\ProjectException;
 use App\Exceptions\DocumentException;
@@ -96,7 +97,7 @@ class ProjectController extends Controller
     {
         return $this->success(
             message: 'Project data retrieved',
-            data: $project
+            data: new ProjectDataResource($project)
         );
     }
 

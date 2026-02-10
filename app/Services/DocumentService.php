@@ -6,13 +6,24 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use App\Exceptions\DocumentException;
 use App\Models\Document;
 use App\Models\User;
-use Illuminate\Support\Facades\Storage;
 
 class DocumentService
 {
+    /**
+     * Download document
+     */
+    public function downloadDocument(Document $document): array
+    {
+        return [
+            'path' => Storage::disk('public')->path($document->doc_path),
+            'name' => $document->doc_name,
+        ];
+    }
+
     /**
      * Generate storage path for document
      */
@@ -20,7 +31,7 @@ class DocumentService
         Model $documentable,
         UploadedFile $file
     ): string {
-        $modelType = class_basename($documentable);
+        $modelType = strtolower(class_basename($documentable));
         $modelId = $documentable->getKey();
         $extension = strtolower($file->getClientOriginalExtension());
         $filename = Str::uuid() . '.' . $extension;
@@ -68,7 +79,7 @@ class DocumentService
     }
 
     /**
-     * Delete user document path
+     * Delete document path
      */
     public function deleteDocumentPath(Document $document): void
     {
@@ -87,12 +98,14 @@ class DocumentService
     }
 
     /**
-     * Delete document from storage
+     * Delete document directory
      */
-    private function deleteDocumentFromStorage(Model $documentable): void
+    private function deleteDocumentDirectory(Document $document): void
     {
         try {
-            $documentableType = class_basename($documentable);
+            $documentable = $document->documentable;
+
+            $documentableType = strtolower(class_basename($documentable));
             $documentableId = $documentable->getKey();
 
             Storage::disk('public')->deleteDirectory("documents/{$documentableType}/{$documentableId}");
@@ -110,11 +123,9 @@ class DocumentService
     public function deleteDocument(Document $document): void
     {
         try {
-            DB::transaction(function () use ($document) {
-                $this->deleteDocumentFromStorage($document);
+            $this->deleteDocumentDirectory($document);
 
-                $document->delete();
-            });
+            $document->delete();
         } catch (\Throwable $e) {
             throw DocumentException::deleteDocumentFailed(
                 documentId: $document->id,

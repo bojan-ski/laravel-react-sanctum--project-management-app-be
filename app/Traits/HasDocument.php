@@ -2,14 +2,14 @@
 
 namespace App\Traits;
 
-use Illuminate\Database\Eloquent\Relations\MorphMany;
 use App\Models\Document;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
 
 trait HasDocument
 {
-    public function document(): MorphMany
+    public function document(): MorphOne
     {
-        return $this->morphMany(Document::class, 'documentable');
+        return $this->morphOne(Document::class, 'documentable');
     }
 
     public function hasDocument(): bool

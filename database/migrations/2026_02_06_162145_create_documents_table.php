@@ -19,7 +19,6 @@ return new class extends Migration
             $table->string('doc_path');
             $table->timestamps();
 
-            $table->index(['documentable_type', 'documentable_id']);
             $table->index('uploaded_by');
             $table->index('created_at');
         });

@@ -31,15 +31,15 @@ class ProjectCardResource extends JsonResource
         return [
             'id' => $this->id,
             'title' => $this->title,
-            // 'description' => $this->description,
-            'description' => $this->truncateDescription($this->description, 150),
+            'description' => $this->description,
+            // 'description' => $this->truncateDescription($this->description, 150),
             'status' => $this->status,
             'deadline' => $this->deadline?->format('Y-m-d'),
+            'is_owner' => $this->isOwner($request->user()),
             'owner' => [
                 'name' => $this->owner->name,
                 'avatar' => $this->owner->avatar,
             ],
-            'is_owner' => $this->isOwner($request->user()),
             'created_at' => $this->created_at->toIso8601String(),
             'updated_at' => $this->updated_at->toIso8601String(),
         ];
