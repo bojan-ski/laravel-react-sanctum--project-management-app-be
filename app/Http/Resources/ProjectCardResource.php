@@ -31,8 +31,7 @@ class ProjectCardResource extends JsonResource
         return [
             'id' => $this->id,
             'title' => $this->title,
-            'description' => $this->description,
-            // 'description' => $this->truncateDescription($this->description, 150),
+            'description' => $this->truncateDescription($this->description, 300),
             'status' => $this->status,
             'deadline' => $this->deadline?->format('Y-m-d'),
             'is_owner' => $this->isOwner($request->user()),

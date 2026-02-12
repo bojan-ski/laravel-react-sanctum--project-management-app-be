@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Services\ProjectMemberService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -39,8 +40,10 @@ class ProjectResource extends JsonResource
                 'name' => $member->name,
                 'email' => $member->email,
                 'avatar' => $member->avatar,
+                'is_owner' => $this->isOwner($member),
                 'joined_at' => $member->pivot->joined_at ?? null,
             ]),
+            'members_limit' => ProjectMemberService::MAX_MEMBERS_PER_PROJECT,
             'created_at' => $this->created_at->toIso8601String(),
             'updated_at' => $this->updated_at->toIso8601String(),
         ];

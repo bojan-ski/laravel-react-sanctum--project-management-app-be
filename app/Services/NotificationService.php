@@ -3,53 +3,97 @@
 namespace App\Services;
 
 use Illuminate\Support\Collection;
-use App\Models\Notification;
-use App\Models\Project;
-use App\Models\User;
 use App\Enums\NotificationType;
 use App\Enums\InvitationStatus;
 use App\Models\Task;
+use App\Models\Notification;
+use App\Models\Project;
+use App\Models\User;
 
 class NotificationService
 {
     /**
      * Create notification - project invitation
      */
-    public function createInvitation(
+    // public function projectInvitation(
+    //     User $invitee,
+    //     Project $project,
+    //     User $inviter
+    // ): Notification {
+    //     $project->members()->attach($invitee->id, [
+    //         'joined_at' => now(),
+    //     ]);
+
+    //     return Notification::create([
+    //         'user_id' => $invitee->id,
+    //         'type' => NotificationType::INVITATION,
+    //         'notifiable_type' => Project::class,
+    //         'notifiable_id' => $project->id,
+    //         'data' => [
+    //             'inviter_name' => $inviter->name,
+    //             'inviter_id' => $inviter->id,
+    //             'message' => "{$inviter->name} invited you to join project: {$project->title}",
+    //         ],
+    //         'action_taken' => InvitationStatus::ACCEPTED,
+    //         'read_at' => now(),
+    //     ]);
+    // }
+    public function projectInvitation(
         User $invitee,
         Project $project,
         User $inviter
     ): Notification {
         return Notification::create([
             'user_id' => $invitee->id,
-            'type' => NotificationType::INVITATION->value,
+            'type' => NotificationType::INVITATION,
             'notifiable_type' => Project::class,
             'notifiable_id' => $project->id,
             'data' => [
                 'inviter_name' => $inviter->name,
                 'inviter_id' => $inviter->id,
-                'message' => "{$inviter->name} invited you to join {$project->title}",
+                'message' => "{$inviter->name} invited you to join project: {$project->title}",
             ]
         ]);
     }
 
     /**
-     * Create notification - remove from project
+     * Create notification - member left project 
      */
-    public function removeFromProject(
+    public function memberLeft(
         User $receiver,
         Project $project,
         User $sender
     ): Notification {
         return Notification::create([
             'user_id' => $receiver->id,
-            'type' => NotificationType::REMOVED_FROM_PROJECT->value,
+            'type' => NotificationType::LEFT_THE_PROJECT,
             'notifiable_type' => Project::class,
             'notifiable_id' => $project->id,
             'data' => [
                 'sender_name' => $sender->name,
                 'sender_id' => $sender->id,
-                'message' => "{$sender->name} removed you from {$project->title}",
+                'message' => "{$sender->name} has left the project: {$project->title}",
+            ]
+        ]);
+    }
+
+    /**
+     * Create notification - removed from project
+     */
+    public function removedFromProject(
+        User $receiver,
+        Project $project,
+        User $sender
+    ): Notification {
+        return Notification::create([
+            'user_id' => $receiver->id,
+            'type' => NotificationType::REMOVED_FROM_PROJECT,
+            'notifiable_type' => Project::class,
+            'notifiable_id' => $project->id,
+            'data' => [
+                'sender_name' => $sender->name,
+                'sender_id' => $sender->id,
+                'message' => "{$sender->name} removed you from project: {$project->title}",
             ]
         ]);
     }
@@ -64,7 +108,7 @@ class NotificationService
     ): Notification {
         return Notification::create([
             'user_id' => $receiver->id,
-            'type' => NotificationType::PROJECT_UPDATE->value,
+            'type' => NotificationType::PROJECT_UPDATE,
             'notifiable_type' => Project::class,
             'notifiable_id' => $project->id,
             'data' => [
@@ -85,7 +129,7 @@ class NotificationService
     ): Notification {
         return Notification::create([
             'user_id' => $receiver->id,
-            'type' => NotificationType::PROJECT_DELETED->value,
+            'type' => NotificationType::PROJECT_DELETED,
             'notifiable_type' => Project::class,
             'notifiable_id' => $project->id,
             'data' => [
@@ -107,7 +151,7 @@ class NotificationService
     ): Notification {
         return Notification::create([
             'user_id' => $receiver->id,
-            'type' => NotificationType::TASK_ASSIGNED->value,
+            'type' => NotificationType::TASK_ASSIGNED,
             'notifiable_type' => Task::class,
             'notifiable_id' => $task->id,
             'data' => [
@@ -176,7 +220,7 @@ class NotificationService
 
         // accept invitation/update notification
         $notification->update([
-            'action_taken' => InvitationStatus::ACCEPTED->value,
+            'action_taken' => InvitationStatus::ACCEPTED,
             'read_at' => now(),
         ]);
 
@@ -189,7 +233,7 @@ class NotificationService
     public function declineInvitation(Notification $notification): bool
     {
         $notification->update([
-            'action_taken' => InvitationStatus::DECLINED->value,
+            'action_taken' => InvitationStatus::DECLINED,
             'read_at' => now(),
         ]);
 

@@ -51,7 +51,6 @@ class ProjectController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    // Run php artisan storage:link to create a symbolic link from public/storage to storage/app/public
     public function store(ProjectRequest $request): JsonResponse
     {
         try {
@@ -117,7 +116,7 @@ class ProjectController extends Controller
 
             return $this->success(
                 message: 'Project updated',
-                data: new ProjectResource($updatedProject)
+                data: new ProjectCardResource($updatedProject)
             );
         } catch (ProjectException $e) {
             $e->report();
@@ -135,7 +134,7 @@ class ProjectController extends Controller
     }
 
     /**
-     * Change project status to completed or cancelled
+     * Change project status
      */
     public function status(
         UpdateProjectStatusRequest $request,
@@ -149,7 +148,10 @@ class ProjectController extends Controller
 
             return $this->success(
                 message: 'Project status updated',
-                data: new ProjectResource($updatedProject)
+                data: [
+                    'id' => $project->id,
+                    'status' => $updatedProject->status
+                ]
             );
         } catch (ProjectException $e) {
             $e->report();

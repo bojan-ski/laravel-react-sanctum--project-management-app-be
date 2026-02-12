@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Project;
 
 use Illuminate\Foundation\Http\FormRequest;
+use App\Services\ProjectMemberService;
 
 class InviteMembersRequest extends FormRequest
 {
@@ -22,8 +23,8 @@ class InviteMembersRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'user_ids' => 'required|array|min:1',
-            'user_ids.*' => 'required|integer|exists:users,id',
+            'user_ids' => ['required', 'array', 'max:' . ProjectMemberService::MAX_MEMBERS_PER_PROJECT],
+            'user_ids.*' => ['required', 'integer', 'distinct', 'exists:users,id'],
         ];
     }
 }

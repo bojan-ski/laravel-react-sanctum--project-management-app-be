@@ -5,6 +5,7 @@ namespace App\Exceptions;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 use Exception;
+use Illuminate\Http\JsonResponse;
 
 class DocumentException extends Exception
 {
@@ -108,6 +109,17 @@ class DocumentException extends Exception
     public function getStatusCode(): int
     {
         return $this->statusCode;
+    }
+
+    /**
+     * Render the exception as an HTTP response
+     */
+    public function render(): JsonResponse
+    {
+        return response()->json([
+            'status' => 'error',
+            'message' => $this->getMessage(),
+        ], $this->statusCode);
     }
 
     /**

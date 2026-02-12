@@ -9,6 +9,7 @@ enum NotificationType: string
     case COMMENT_MENTION = 'comment_mention';
     case PROJECT_UPDATE = 'project_update';
     case PROJECT_DELETED = 'project_deleted';
+    case LEFT_THE_PROJECT = 'left_the_project';
     case REMOVED_FROM_PROJECT = 'removed_from_project';
 
     public static function values(): array

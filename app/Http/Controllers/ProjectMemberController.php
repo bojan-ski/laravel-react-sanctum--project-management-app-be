@@ -6,16 +6,17 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use App\Http\Requests\Project\InviteMembersRequest;
 use App\Http\Resources\UserResource;
+use App\Exceptions\ProjectMemberException;
 use App\Services\ProjectMemberService;
+use App\Traits\ApiResponse;
 use App\Models\Project;
 use App\Models\User;
-use App\Traits\ApiResponse;
 
 class ProjectMemberController extends Controller
 {
     use ApiResponse;
 
-    public function __construct(private ProjectMemberService $memberService) {}
+    public function __construct(protected readonly ProjectMemberService $memberService) {}
 
     /**
      * Get list of available users
@@ -25,8 +26,8 @@ class ProjectMemberController extends Controller
         $users = $this->memberService->getAvailableUsers($project);
 
         return $this->success(
-            UserResource::collection($users),
-            'Available users retrieved'
+            message: 'Available users retrieved',
+            data: UserResource::collection($users)
         );
     }
 
@@ -37,18 +38,70 @@ class ProjectMemberController extends Controller
         InviteMembersRequest $request,
         Project $project
     ): JsonResponse {
-        $response = $this->memberService->inviteMembers(
-            $project,
-            $request->user_ids,
-            $request->user()
+        $this->memberService->checkMaxMembersLimit(
+            project: $project,
+            newMembersCount: count($request->user_ids)
         );
 
-        if (!$response) {
-            return $this->error('Failed to invite members!', 500);
-        }
+        try {
+            $this->memberService->inviteMembers(
+                project: $project,
+                userIds: $request->user_ids,
+                inviter: $request->user()
+            );
 
-        $message = count($request->user_ids) . ' member(s) invited';
-        return $this->success(null, $message);
+            $message = count($request->user_ids) . ' member(s) invited';
+
+            return $this->success(
+                message: $message,
+                data: [
+                    'user_ids' => $request->user_ids
+                ]
+            );
+        } catch (ProjectMemberException $e) {
+            $e->report();
+            return $this->error(
+                message: $e->getMessage(),
+                statusCode: $e->getStatusCode()
+            );
+        }
+    }
+
+    /**
+     * Leave project
+     */
+    public function leave(
+        Request $request,
+        Project $project
+    ): JsonResponse {
+        $user = $request->user();
+
+        $this->memberService->checkBeforeNoLongerMember(
+            project: $project,
+            member: $user
+        );
+
+        try {
+            $this->memberService->leaveProject(
+                $project,
+                $user
+            );
+
+            $message = 'You left project - ' . $project->title;
+
+            return $this->success(
+                message: $message,
+                data: [
+                    'project_id' => $project->id
+                ]
+            );
+        } catch (ProjectMemberException $e) {
+            $e->report();
+            return $this->error(
+                message: $e->getMessage(),
+                statusCode: $e->getStatusCode()
+            );
+        }
     }
 
     /**
@@ -58,23 +111,31 @@ class ProjectMemberController extends Controller
         Project $project,
         User $member
     ): JsonResponse {
-        if (!$project->isMember($member)) {
-            return $this->error('Member does not exist', 404);
-        }
-
-        $projectOwner = auth()->user();
-
-        $response = $this->memberService->removeMember(
+        $this->memberService->checkBeforeNoLongerMember(
             $project,
-            $member,
-            $projectOwner
+            $member
         );
 
-        if (!$response) {
-            return $this->error('Failed to remove member', 500);
-        }
+        try {
+            $this->memberService->removeMember(
+                $project,
+                $member
+            );
 
-        $message = $member->name . ' removed from project';
-        return $this->success(null, $message);
+            $message = $member->name . ' removed from project';
+
+            return $this->success(
+                message: $message,
+                data: [
+                    'member_id' => $member->id
+                ]
+            );
+        } catch (ProjectMemberException $e) {
+            $e->report();
+            return $this->error(
+                message: $e->getMessage(),
+                statusCode: $e->getStatusCode()
+            );
+        }
     }
 }

@@ -9,7 +9,6 @@ use App\Exceptions\DocumentException;
 use App\Services\DocumentService;
 use App\Traits\ApiResponse;
 use App\Models\Document;
-use Illuminate\Support\Facades\Storage;
 
 class DocumentController extends Controller
 {

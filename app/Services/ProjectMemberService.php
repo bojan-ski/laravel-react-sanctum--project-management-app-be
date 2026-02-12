@@ -4,40 +4,107 @@ namespace App\Services;
 
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
-use App\Mail\ProjectInvitationMail;
-use App\Models\Notification;
+use App\Exceptions\ProjectMemberException;
+use App\Services\Mail\MailService;
+use App\Enums\NotificationType;
+use App\Enums\UserRole;
 use App\Models\Project;
 use App\Models\User;
+use App\Models\Notification;
 
 class ProjectMemberService
 {
-    public function __construct(private NotificationService $notificationService) {}
+    public function __construct(
+        protected readonly NotificationService $notificationService,
+        protected readonly MailService $mailService,
+    ) {}
+
+    public const MAX_MEMBERS_PER_PROJECT = 5;
 
     /**
      * Get available users to invite to project
      */
     public function getAvailableUsers(Project $project): Collection
     {
-        // get existing members
         $existingMembers = $project->members()->pluck('users.id');
 
-        // get already invited users id who have not decided yet
         $pendingInvitationUserIds = Notification::where('notifiable_type', Project::class)
             ->where('notifiable_id', $project->id)
-            ->where('type', 'invitation')
+            ->where('type', NotificationType::INVITATION)
             ->whereNull('action_taken')
             ->pluck('user_id');
 
-        // run query
         $query = User::query()
-            ->where('role', '!=', 'admin')
+            ->where('role', '!=', UserRole::ADMIN)
             ->where('id', '!=', $project->owner_id)
             ->whereNotIn('id', $existingMembers)
             ->whereNotIn('id', $pendingInvitationUserIds);
 
         return $query->get();
+    }
+
+    /**
+     * Check if max members limit would be exceeded
+     */
+    public function checkMaxMembersLimit(
+        Project $project,
+        int $newMembersCount
+    ): void {
+        $currentCount = $project->members()->count();
+
+        $pendingCount = Notification::where('notifiable_type', Project::class)
+            ->where('notifiable_id', $project->id)
+            ->where('type', NotificationType::INVITATION)
+            ->whereNull('action_taken')
+            ->count();
+
+        if (($currentCount + $pendingCount + $newMembersCount) > self::MAX_MEMBERS_PER_PROJECT) {
+            throw ProjectMemberException::maxMembersReached($project->id);
+        }
+    }
+
+    /**
+     * Check if user has pending invitation
+     */
+    private function hasPendingInvitation(
+        Project $project,
+        User $user
+    ): bool {
+        return Notification::where('notifiable_type', Project::class)
+            ->where('user_id', $user->id)
+            ->where('notifiable_id', $project->id)
+            ->where('type', NotificationType::INVITATION)
+            ->whereNull('action_taken')
+            ->exists();
+    }
+
+    /**
+     * Check user before inviting to project
+     */
+    private function checkUserBeforeInvite(
+        Project $project,
+        User $invitee
+    ): void {
+        if ($project->owner_id === $invitee->id) {
+            throw ProjectMemberException::cannotInviteSelf(
+                projectId: $project->id,
+                userId: $project->owner_id
+            );
+        }
+
+        if ($project->isMember($invitee)) {
+            throw ProjectMemberException::alreadyMember(
+                projectId: $project->id,
+                userId: $invitee->id
+            );
+        }
+
+        if ($this->hasPendingInvitation($project, $invitee)) {
+            throw ProjectMemberException::alreadyInvited(
+                projectId: $project->id,
+                userId: $invitee->id
+            );
+        }
     }
 
     /**
@@ -47,50 +114,107 @@ class ProjectMemberService
         Project $project,
         array $userIds,
         User $inviter
-    ): bool {
+    ): void {
         try {
             DB::transaction(function () use ($project, $userIds, $inviter) {
                 foreach ($userIds as $userId) {
-                    $user = User::find($userId);
+                    $invitee = User::find($userId);
 
-                    if ($user) {
-                        // send email
-                        $this->sendInvitationEmail($user, $project, $inviter);
-
-                        // send notification
-                        $this->notificationService->createInvitation($user, $project, $inviter);
+                    if ($invitee) {
+                        $this->checkUserBeforeInvite($project, $invitee);
+                        $this->mailService->sendInvitationEmail($invitee, $project, $inviter);
+                        $this->notificationService->projectInvitation($invitee, $project, $inviter);
                     }
                 }
             });
-
-            return true;
-        } catch (\Throwable $th) {
-            Log::error('Invite members failed', [
-                'error' => $th->getMessage()
-            ]);
-
-            return false;
+        } catch (ProjectMemberException $e) {
+            throw $e;
+        } catch (\Throwable $e) {
+            throw ProjectMemberException::inviteUsersFailed(
+                projectId: $project->id,
+                previous: $e
+            );
         }
     }
 
     /**
-     * Send invitation email to user
+     * Check user before remove/leave from project
      */
-    private function sendInvitationEmail(
-        User $user,
+    public function checkBeforeNoLongerMember(
         Project $project,
-        User $inviter
+        User $member
+    ): void {
+        if ($project->owner_id === $member->id) {
+            throw ProjectMemberException::projectOwner(
+                projectId: $project->id,
+                userId: $project->owner_id
+            );
+        }
+
+        if (!$project->isMember($member)) {
+            throw ProjectMemberException::notMember(
+                projectId: $project->id,
+                userId: $member->id
+            );
+        }
+    }
+
+    /**
+     * Notify project members user has left
+     */
+    private function notifyMembersUserLeft(
+        Project $project,
+        User $formerMember
+    ): void {
+        $members = $project->members()->where('member_id', '!=', $formerMember->id)->get();
+
+        foreach ($members as $member) {
+            $this->notificationService->memberLeft(
+                receiver: $member,
+                project: $project,
+                sender: $formerMember
+            );
+        }
+
+        // $members = $project->members()->get();
+
+        // foreach ($members as $member) {
+        //     if ($member->id !== $formerMember->id) {
+        //         $this->notificationService->memberLeft(
+        //             receiver: $member,
+        //             project: $project,
+        //             sender: $formerMember
+        //         );
+        //     }
+        // }
+    }
+
+    /**
+     * Leave project
+     */
+    public function leaveProject(
+        Project $project,
+        User $user,
     ): void {
         try {
-            Mail::to($user->email)->queue(
-                new ProjectInvitationMail($user, $project, $inviter)
+            DB::transaction(function () use ($project, $user) {
+                $project->tasks()
+                    ->where('assigned_to', $user->id)
+                    ->update(['assigned_to' => null]);
+
+                $project->members()->detach($user->id);
+
+                $this->notifyMembersUserLeft(
+                    project: $project,
+                    formerMember: $user
+                );
+            });
+        } catch (\Throwable $e) {
+            throw ProjectMemberException::leaveProjectFailed(
+                projectId: $project->id,
+                userId: $user->id,
+                previous: $e
             );
-        } catch (\Throwable $th) {
-            Log::error('Failed to send project invitation email', [
-                'user_id' => $user->id,
-                'project_id' => $project->id,
-                'error' => $th->getMessage(),
-            ]);
         }
     }
 
@@ -100,28 +224,27 @@ class ProjectMemberService
     public function removeMember(
         Project $project,
         User $member,
-        User $projectOwner
-    ): bool {
+    ): void {
         try {
-            // run remove user
-            $project->members()->detach($member->id);
+            DB::transaction(function () use ($project, $member) {
+                $project->tasks()
+                    ->where('assigned_to', $member->id)
+                    ->update(['assigned_to' => null]);
 
-            // send notification
-            $this->notificationService->removeFromProject(
-                $member,
-                $project,
-                $projectOwner
+                $project->members()->detach($member->id);
+
+                $this->notificationService->removedFromProject(
+                    receiver: $member,
+                    project: $project,
+                    sender: $project->owner
+                );
+            });
+        } catch (\Throwable $e) {
+            throw ProjectMemberException::removeMemberFailed(
+                projectId: $project->id,
+                userId: $member->id,
+                previous: $e
             );
-
-            return true;
-        } catch (\Throwable $th) {
-            Log::error('Failed to remove project member', [
-                'user_id' => $member->id,
-                'project_id' => $project->id,
-                'error' => $th->getMessage(),
-            ]);
-
-            return false;
         }
     }
 }

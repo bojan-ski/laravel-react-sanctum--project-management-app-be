@@ -127,7 +127,7 @@ class ProjectException extends Exception
             projectId: $projectId,
             message: 'Failed to change project status!',
             type: self::TYPE_INVALID_STATUS_CHANGE,
-            statusCode: 422,
+            statusCode: 500,
             logLevel: 'error',
         );
     }

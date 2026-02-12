@@ -4,7 +4,6 @@ namespace App\Services;
 
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Pagination\LengthAwarePaginator;
 use App\Exceptions\ProjectException;
 use App\Models\User;
@@ -70,11 +69,6 @@ class ProjectService
     ): void {
         try {
             DB::transaction(function () use ($user, $formData, $file) {
-                // if ($file) {
-                //     $filePath = $file->store('documents', 'public');
-                //     $formData['document_path'] = $filePath;
-                // }
-
                 $project = Project::create([
                     'title' => $formData['title'],
                     'description' => $formData['description'],
@@ -105,8 +99,8 @@ class ProjectService
     public function getProjectDetails(Project $project): Project
     {
         return $project->load([
-            'owner:id,name,email,avatar',
-            'members:id,name,email,avatar',
+            'owner:id,name,email',
+            'members:id,name,email',
         ])->loadCount(['members', 'tasks']);
     }
 
@@ -151,13 +145,6 @@ class ProjectService
         try {
             DB::transaction(function () use ($project, $formData, $file) {
                 if ($file) {
-                    // if ($project->document_path) {
-                    //     Storage::disk('public')->delete($project->document_path);
-                    // }
-
-                    // $filePath = $file->store('documents', 'public');
-                    // $formData['document_path'] = $filePath;
-
                     if ($project->hasDocument()) {
                         $this->documentService->deleteDocumentPath($project->document);
                     }
@@ -237,10 +224,6 @@ class ProjectService
     {
         try {
             DB::transaction(function () use ($project) {
-                // if ($project->document_path) {
-                //     Storage::disk('public')->delete($project->document_path);
-                // }
-
                 if ($project->hasDocument()) {
                     $this->documentService->deleteDocument($project->document);
                 }
