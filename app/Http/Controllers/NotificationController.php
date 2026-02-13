@@ -4,16 +4,17 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
-use App\Services\NotificationService;
 use App\Http\Resources\NotificationResource;
-use App\Models\Notification;
+use App\Exceptions\NotificationException;
+use App\Services\NotificationService;
 use App\Traits\ApiResponse;
+use App\Models\Notification;
 
 class NotificationController extends Controller
 {
     use ApiResponse;
 
-    public function __construct(private NotificationService $notificationService) {}
+    public function __construct(protected readonly NotificationService $notificationService) {}
 
     /**
      * Get user's notifications
@@ -23,14 +24,13 @@ class NotificationController extends Controller
         $unreadOnly = $request->boolean('unread');
 
         $notifications = $this->notificationService->getUserNotifications(
-            $request->user(),
-            $unreadOnly
+            user: $request->user(),
+            unreadOnly: $unreadOnly
         );
 
-        // return json result
         return $this->success(
-            NotificationResource::collection($notifications),
-            'Notifications retrieved'
+            message: 'Notifications retrieved',
+            data: NotificationResource::collection($notifications)
         );
     }
 
@@ -42,28 +42,30 @@ class NotificationController extends Controller
         $count = $this->notificationService->getUnreadCount($request->user());
 
         return $this->success(
-            ['count' => $count],
-            'Unread count retrieved'
+            message: 'Unread count retrieved',
+            data: ['count' => $count]
         );
     }
 
     /**
      * Mark notification as read
      */
-    public function markAsRead(
-        Request $request,
-        Notification $notification
-    ): JsonResponse {
-        if ($request->user()->id !== $notification->user_id) {
-            return $this->error('Unauthorized', 403);
+    public function markAsRead(Notification $notification): JsonResponse
+    {
+        try {
+            $this->notificationService->markAsRead($notification);
+
+            return $this->success(
+                message: 'Notification marked as read',
+                data: $notification->id
+            );
+        } catch (NotificationException $e) {
+            $e->report();
+            return $this->error(
+                message: $e->getMessage(),
+                statusCode: $e->getStatusCode()
+            );
         }
-
-        $this->notificationService->markAsRead($notification);
-
-        return $this->success(
-            $notification->id,
-            'Notification marked as read'
-        );
     }
 
     /**
@@ -71,12 +73,20 @@ class NotificationController extends Controller
      */
     public function markAllAsRead(Request $request): JsonResponse
     {
-        $count = $this->notificationService->markAllAsRead($request->user());
+        try {
+            $count = $this->notificationService->markAllAsRead($request->user());
 
-        return $this->success(
-            ['count' => $count],
-            "{$count} notification(s) marked as read"
-        );
+            return $this->success(
+                message: "{$count} notification(s) marked as read",
+                data: ['count' => $count]
+            );
+        } catch (NotificationException $e) {
+            $e->report();
+            return $this->error(
+                message: $e->getMessage(),
+                statusCode: $e->getStatusCode()
+            );
+        }
     }
 
     /**
@@ -86,28 +96,25 @@ class NotificationController extends Controller
         Notification $notification,
         Request $request
     ): JsonResponse {
-        if ($notification->user_id !== $request->user()->id) {
-            return $this->error('Unauthorized', 403);
+        $this->notificationService->validateInvitation($notification);
+
+        try {
+            $updatedNotification = $this->notificationService->acceptInvitation(
+                notification: $notification,
+                user: $request->user()
+            );
+
+            return $this->success(
+                message: 'Invitation accepted',
+                data: new NotificationResource($updatedNotification)
+            );
+        } catch (NotificationException $e) {
+            $e->report();
+            return $this->error(
+                message: $e->getMessage(),
+                statusCode: $e->getStatusCode()
+            );
         }
-
-        if (!$notification->isInvitation()) {
-            return $this->error('This is not an invitation', 400);
-        }
-
-        if (!$notification->isPending()) {
-            return $this->error('This invitation has already been responded to', 400);
-        }
-
-        $response = $this->notificationService->acceptInvitation($notification, $request->user());
-
-        if (!$response) {
-            return $this->error('Failed to accept invitation', 500);
-        }
-
-        return $this->success(
-            new NotificationResource($notification),
-            'Invitation accepted successfully'
-        );
     }
 
     /**
@@ -117,27 +124,24 @@ class NotificationController extends Controller
         Request $request,
         Notification $notification
     ): JsonResponse {
-        if ($notification->user_id !== $request->user()->id) {
-            return $this->error('Unauthorized', 403);
+        $this->notificationService->validateInvitation($notification);
+
+        try {
+            $updatedNotification = $this->notificationService->declineInvitation(
+                notification: $notification,
+                user: $request->user()
+            );
+
+            return $this->success(
+                message: 'Invitation declined',
+                data: new NotificationResource($updatedNotification)
+            );
+        } catch (NotificationException $e) {
+            $e->report();
+            return $this->error(
+                message: $e->getMessage(),
+                statusCode: $e->getStatusCode()
+            );
         }
-
-        if (!$notification->isInvitation()) {
-            return $this->error('This is not an invitation', 400);
-        }
-
-        if (!$notification->isPending()) {
-            return $this->error('This invitation has already been responded to', 400);
-        }
-
-        $success = $this->notificationService->declineInvitation($notification);
-
-        if (!$success) {
-            return $this->error('Failed to decline invitation', 500);
-        }
-
-        return $this->success(
-            new NotificationResource($notification),
-            'Invitation declined'
-        );
     }
 }

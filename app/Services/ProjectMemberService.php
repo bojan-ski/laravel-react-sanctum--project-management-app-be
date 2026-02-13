@@ -115,6 +115,8 @@ class ProjectMemberService
         array $userIds,
         User $inviter
     ): void {
+        $invitees = [];
+
         try {
             DB::transaction(function () use ($project, $userIds, $inviter) {
                 foreach ($userIds as $userId) {
@@ -123,7 +125,7 @@ class ProjectMemberService
                     if ($invitee) {
                         $this->checkUserBeforeInvite($project, $invitee);
                         $this->mailService->sendInvitationEmail($invitee, $project, $inviter);
-                        $this->notificationService->projectInvitation($invitee, $project, $inviter);
+                        $invitees[] = $invitee;
                     }
                 }
             });
@@ -134,6 +136,10 @@ class ProjectMemberService
                 projectId: $project->id,
                 previous: $e
             );
+        }
+
+        foreach ($invitees as $invitee) {
+            $this->notificationService->projectInvitation($invitee, $project, $inviter);
         }
     }
 
@@ -203,11 +209,6 @@ class ProjectMemberService
                     ->update(['assigned_to' => null]);
 
                 $project->members()->detach($user->id);
-
-                $this->notifyMembersUserLeft(
-                    project: $project,
-                    formerMember: $user
-                );
             });
         } catch (\Throwable $e) {
             throw ProjectMemberException::leaveProjectFailed(
@@ -216,6 +217,11 @@ class ProjectMemberService
                 previous: $e
             );
         }
+
+        $this->notifyMembersUserLeft(
+            project: $project,
+            formerMember: $user
+        );
     }
 
     /**
@@ -232,12 +238,6 @@ class ProjectMemberService
                     ->update(['assigned_to' => null]);
 
                 $project->members()->detach($member->id);
-
-                $this->notificationService->removedFromProject(
-                    receiver: $member,
-                    project: $project,
-                    sender: $project->owner
-                );
             });
         } catch (\Throwable $e) {
             throw ProjectMemberException::removeMemberFailed(
@@ -246,5 +246,11 @@ class ProjectMemberService
                 previous: $e
             );
         }
+
+        $this->notificationService->removedFromProject(
+            receiver: $member,
+            project: $project,
+            sender: $project->owner
+        );
     }
 }

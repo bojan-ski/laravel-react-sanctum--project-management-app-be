@@ -11,11 +11,12 @@ use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProjectMemberController;
-use App\Http\Controllers\TaskController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\TaskController;
 use App\Http\Controllers\Admin\UserController;
 
 require __DIR__ . '/auth.php';
+require __DIR__ . '/notifications.php';
 require __DIR__ . '/projects.php';
 require __DIR__ . '/documents.php';
 require __DIR__ . '/members.php';
@@ -24,21 +25,9 @@ require __DIR__ . '/avatar.php';
 
 // Regular user routes
 Route::middleware(['auth:sanctum', IsRegularUserMiddleware::class])->group(function () {
-
-
     // task routes
     Route::middleware(IsProjectOwnerMiddleware::class)->group(function () {
         Route::post('/projects/{project}/tasks', [TaskController::class, 'store']);
-    });
-
-    // notification routes
-    Route::prefix('notifications')->group(function () {
-        Route::get('/', [NotificationController::class, 'index']);
-        Route::get('/unread_count', [NotificationController::class, 'unreadCount']);
-        Route::post('/mark_all_as_read', [NotificationController::class, 'markAllAsRead']);
-        Route::post('/{notification}/read', [NotificationController::class, 'markAsRead']);
-        Route::post('/{notification}/accept', [NotificationController::class, 'acceptInvitation']);
-        Route::post('/{notification}/decline', [NotificationController::class, 'declineInvitation']);
     });
 });
 

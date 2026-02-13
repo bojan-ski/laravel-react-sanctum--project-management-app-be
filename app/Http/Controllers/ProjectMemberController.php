@@ -7,6 +7,7 @@ use Illuminate\Http\JsonResponse;
 use App\Http\Requests\Project\InviteMembersRequest;
 use App\Http\Resources\UserResource;
 use App\Exceptions\ProjectMemberException;
+use App\Exceptions\NotificationException;
 use App\Services\ProjectMemberService;
 use App\Traits\ApiResponse;
 use App\Models\Project;
@@ -64,6 +65,12 @@ class ProjectMemberController extends Controller
                 message: $e->getMessage(),
                 statusCode: $e->getStatusCode()
             );
+        } catch (NotificationException $e) {
+            $e->report();
+            return $this->error(
+                message: $e->getMessage(),
+                statusCode: $e->getStatusCode()
+            );
         }
     }
 
@@ -101,6 +108,12 @@ class ProjectMemberController extends Controller
                 message: $e->getMessage(),
                 statusCode: $e->getStatusCode()
             );
+        } catch (NotificationException $e) {
+            $e->report();
+            return $this->error(
+                message: $e->getMessage(),
+                statusCode: $e->getStatusCode()
+            );
         }
     }
 
@@ -131,6 +144,12 @@ class ProjectMemberController extends Controller
                 ]
             );
         } catch (ProjectMemberException $e) {
+            $e->report();
+            return $this->error(
+                message: $e->getMessage(),
+                statusCode: $e->getStatusCode()
+            );
+        } catch (NotificationException $e) {
             $e->report();
             return $this->error(
                 message: $e->getMessage(),
