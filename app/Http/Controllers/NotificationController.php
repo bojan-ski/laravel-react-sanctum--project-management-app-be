@@ -57,7 +57,9 @@ class NotificationController extends Controller
 
             return $this->success(
                 message: 'Notification marked as read',
-                data: $notification->id
+                data: [
+                    'id' => $notification->id
+                ]
             );
         } catch (NotificationException $e) {
             $e->report();

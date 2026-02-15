@@ -13,10 +13,10 @@ Route::middleware([
         ->name('notifications.index');
     Route::get('/unread_count', [NotificationController::class, 'unreadCount'])
         ->name('notifications.count.unread');
+    Route::post('/read_all', [NotificationController::class, 'markAllAsRead'])
+        ->name('notifications.read.all');
 
     Route::middleware(IsNotificationOwnerMiddleware::class)->group(function () {
-        Route::post('/read_all', [NotificationController::class, 'markAllAsRead'])
-            ->name('notifications.read.all');
         Route::post('/{notification}/read', [NotificationController::class, 'markAsRead'])
             ->name('notifications.read.single');
         Route::post('/{notification}/accept_invitation', [NotificationController::class, 'acceptInvitation'])

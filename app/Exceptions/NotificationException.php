@@ -206,6 +206,6 @@ class NotificationException extends Exception
 
         $logLevel = $this->logLevel;
 
-        Log::$logLevel('Profile error', $context);
+        Log::$logLevel('Notification error', $context);
     }
 }

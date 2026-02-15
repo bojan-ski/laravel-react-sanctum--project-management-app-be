@@ -118,7 +118,7 @@ class ProjectMemberService
         $invitees = [];
 
         try {
-            DB::transaction(function () use ($project, $userIds, $inviter) {
+            DB::transaction(function () use ($project, $userIds, $inviter, &$invitees) {
                 foreach ($userIds as $userId) {
                     $invitee = User::find($userId);
 

@@ -15,6 +15,7 @@ class AuthResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
+            'id' => $request->user()->id,
             'is_authenticated' => $request->user() ? true : false,
             'is_admin' => $this->isAdmin(),
         ];
