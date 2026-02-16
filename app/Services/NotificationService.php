@@ -7,7 +7,6 @@ use Illuminate\Support\Facades\DB;
 use App\Exceptions\NotificationException;
 use App\Enums\NotificationType;
 use App\Enums\InvitationStatus;
-use App\Events\NotificationSent;
 use App\Models\Task;
 use App\Models\Notification;
 use App\Models\Project;

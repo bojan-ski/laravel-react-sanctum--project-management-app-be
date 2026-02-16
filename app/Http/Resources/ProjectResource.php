@@ -44,6 +44,8 @@ class ProjectResource extends JsonResource
                 'joined_at' => $member->pivot->joined_at ?? null,
             ]),
             'members_limit' => ProjectMemberService::MAX_MEMBERS_PER_PROJECT,
+            'tasks' => $this->tasks,
+            'statistics' => $this->getStatistics(),
             'created_at' => $this->created_at->toIso8601String(),
             'updated_at' => $this->updated_at->toIso8601String(),
         ];

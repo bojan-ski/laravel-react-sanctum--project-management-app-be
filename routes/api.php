@@ -20,16 +20,9 @@ require __DIR__ . '/notifications.php';
 require __DIR__ . '/projects.php';
 require __DIR__ . '/documents.php';
 require __DIR__ . '/members.php';
+require __DIR__ . '/tasks.php';
 require __DIR__ . '/profile.php';
 require __DIR__ . '/avatar.php';
-
-// Regular user routes
-Route::middleware(['auth:sanctum', IsRegularUserMiddleware::class])->group(function () {
-    // task routes
-    Route::middleware(IsProjectOwnerMiddleware::class)->group(function () {
-        Route::post('/projects/{project}/tasks', [TaskController::class, 'store']);
-    });
-});
 
 // Admin user routes
 Route::middleware(['auth:sanctum', IsAdminUserMiddleware::class])

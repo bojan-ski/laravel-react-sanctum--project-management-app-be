@@ -6,6 +6,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Pagination\LengthAwarePaginator;
 use App\Exceptions\ProjectException;
+use App\Enums\TaskStatus;
 use App\Models\User;
 use App\Models\Project;
 
@@ -54,7 +55,13 @@ class ProjectService
         }
 
         return $query->with(['owner'])
-            ->withCount(['members'])
+            ->withCount([
+                'members',
+                'tasks',
+                'tasks as completed_tasks_count' => function ($q) {
+                    $q->where('status', TaskStatus::DONE);
+                },
+            ])
             ->latest()
             ->paginate($perPage);
     }

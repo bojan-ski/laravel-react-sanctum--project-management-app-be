@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use App\Enums\ProjectStatus;
+use App\Enums\TaskStatus;
 use App\Traits\HasDocument;
 
 class Project extends Model
@@ -70,5 +71,23 @@ class Project extends Model
     public function tasks(): HasMany
     {
         return $this->hasMany(Task::class);
+    }
+
+    // get project statistics
+    public function getStatistics(): array
+    {
+        $total = $this->tasks_count ?? $this->tasks()->count();
+        $completed = $this->completed_tasks_count ?? $this->tasks()->where('status', TaskStatus::DONE)->count();
+        $members = $this->members_count ?? $this->members()->count();
+
+        return [
+            'total_tasks' => $total,
+            'completed_tasks' => $completed,
+            'pending_tasks' => $total - $completed,
+            'completion_percentage' => $total > 0
+                ? round(($completed / $total) * 100)
+                : 0,
+            'total_members' => $members,
+        ];
     }
 }

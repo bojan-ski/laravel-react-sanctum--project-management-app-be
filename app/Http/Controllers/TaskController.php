@@ -53,7 +53,7 @@ class TaskController extends Controller
             return $this->error('Failed to create task!', 500);
         }
 
-        return $this->success(null, 'Task created', 201);
+        return $this->success(message: 'Task created');
     }
 
     /**
