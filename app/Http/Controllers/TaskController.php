@@ -2,10 +2,16 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use App\Http\Requests\Task\CreateTaskRequest;
+use App\Http\Requests\Task\UpdateTaskPriorityRequest;
+use App\Http\Requests\Task\UpdateTaskStatusRequest;
 use App\Http\Resources\TaskResource;
+use App\Exceptions\TaskException;
+use App\Exceptions\NotificationException;
+use App\Exceptions\ProjectMemberException;
+use App\Exceptions\TaskActivityException;
+use App\Services\ProjectMemberService;
 use App\Services\TaskService;
 use App\Traits\ApiResponse;
 use App\Models\Project;
@@ -16,7 +22,10 @@ class TaskController extends Controller
 {
     use ApiResponse;
 
-    public function __construct(protected readonly TaskService $taskService) {}
+    public function __construct(
+        protected readonly ProjectMemberService $memberService,
+        protected readonly TaskService $taskService
+    ) {}
 
     /**
      * Display a listing of the resource.
@@ -33,27 +42,41 @@ class TaskController extends Controller
         CreateTaskRequest $request,
         Project $project
     ): JsonResponse {
-        $assignee = User::find($request['assigned_to']);
-
-        if ($assignee && !$project->isMember($assignee)) {
-            return $this->error('Assigned user must be a project member!', 400);
-        }
-
-        if ($assignee && $project->isOwner($assignee)) {
-            return $this->error('Can not assign task to project owner!', 400);
-        }
-
-        $response = $this->taskService->createTask(
+        $this->memberService->checkMemberStatus(
             project: $project,
-            projectOwner: $request->user(),
-            formData: $request->validated()
+            member: User::find($request['assigned_to'])
         );
 
-        if (!$response) {
-            return $this->error('Failed to create task!', 500);
-        }
+        try {
+            $newTask = $this->taskService->createTask(
+                project: $project,
+                projectOwner: $request->user(),
+                formData: $request->validated()
+            );
 
-        return $this->success(message: 'Task created');
+            return $this->success(
+                message: 'Task created',
+                data: new TaskResource($newTask),
+            );
+        } catch (ProjectMemberException $e) {
+            $e->report();
+            return $this->error(
+                message: $e->getMessage(),
+                statusCode: $e->getStatusCode()
+            );
+        } catch (TaskException $e) {
+            $e->report();
+            return $this->error(
+                message: $e->getMessage(),
+                statusCode: $e->getStatusCode()
+            );
+        } catch (NotificationException $e) {
+            $e->report();
+            return $this->error(
+                message: $e->getMessage(),
+                statusCode: $e->getStatusCode()
+            );
+        }
     }
 
     /**
@@ -70,26 +93,119 @@ class TaskController extends Controller
     }
 
     /**
-     * Show the form for editing the specified resource.
+     * Update task status
      */
-    public function edit(string $id)
-    {
-        //
+    public function updateStatus(
+        UpdateTaskStatusRequest $request,
+        Task $task
+    ): JsonResponse {
+        try {
+            $updatedTask = $this->taskService->statusChange(
+                task: $task,
+                status: $request->validated('status'),
+            );
+
+            return $this->success(
+                message: 'Task status updated',
+                data: [
+                    'id' => $task->id,
+                    'status' => $updatedTask->status
+                ]
+            );
+        } catch (TaskException $e) {
+            $e->report();
+            return $this->error(
+                message: $e->getMessage(),
+                statusCode: $e->getStatusCode()
+            );
+        } catch (TaskActivityException $e) {
+            $e->report();
+            return $this->error(
+                message: $e->getMessage(),
+                statusCode: $e->getStatusCode()
+            );
+        } catch (NotificationException $e) {
+            $e->report();
+            return $this->error(
+                message: $e->getMessage(),
+                statusCode: $e->getStatusCode()
+            );
+        }
     }
 
     /**
-     * Update the specified resource in storage.
+     * Update task priority
      */
-    public function update(Request $request, string $id)
-    {
-        //
+    public function updatePriority(
+        UpdateTaskPriorityRequest $request,
+        Task $task
+    ): JsonResponse {
+        try {
+            $updatedTask = $this->taskService->priorityChange(
+                task: $task,
+                priority: $request->validated('priority'),
+            );
+
+            return $this->success(
+                message: 'Task priority updated',
+                data: [
+                    'id' => $task->id,
+                    'status' => $updatedTask->priority
+                ]
+            );
+        } catch (TaskException $e) {
+            $e->report();
+            return $this->error(
+                message: $e->getMessage(),
+                statusCode: $e->getStatusCode()
+            );
+        } catch (TaskActivityException $e) {
+            $e->report();
+            return $this->error(
+                message: $e->getMessage(),
+                statusCode: $e->getStatusCode()
+            );
+        } catch (NotificationException $e) {
+            $e->report();
+            return $this->error(
+                message: $e->getMessage(),
+                statusCode: $e->getStatusCode()
+            );
+        }
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(Task $task): JsonResponse
     {
-        //
+        try {
+            $this->taskService->deleteTask($task);
+
+            return $this->success(
+                message: 'Task deleted',
+                data: [
+                    'id' => $task->id
+                ]
+            );
+        } catch (TaskException $e) {
+            $e->report();
+            return $this->error(
+                message: $e->getMessage(),
+                statusCode: $e->getStatusCode()
+            );
+        } catch (TaskActivityException $e) {
+            $e->report();
+            return $this->error(
+                message: $e->getMessage(),
+                statusCode: $e->getStatusCode()
+            );
+        } catch (NotificationException $e) {
+            $e->report();
+            return $this->error(
+                message: $e->getMessage(),
+                statusCode: $e->getStatusCode()
+            );
+        }
     }
 }

@@ -144,9 +144,9 @@ class ProjectMemberService
     }
 
     /**
-     * Check user before remove/leave from project
+     * Check user/member
      */
-    public function checkBeforeNoLongerMember(
+    public function checkMemberStatus(
         Project $project,
         User $member
     ): void {

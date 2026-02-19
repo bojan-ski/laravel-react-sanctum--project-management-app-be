@@ -62,7 +62,6 @@ class ProjectResource extends JsonResource
                 'created_at' => $task->created_at->toIso8601String(),
                 'updated_at' => $task->updated_at->toIso8601String(),
             ]),
-            // 'tasks' => $this->tasks,
             'statistics' => $this->getStatistics(),
             'created_at' => $this->created_at->toIso8601String(),
             'updated_at' => $this->updated_at->toIso8601String(),

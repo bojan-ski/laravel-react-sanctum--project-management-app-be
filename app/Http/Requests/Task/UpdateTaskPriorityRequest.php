@@ -3,6 +3,10 @@
 namespace App\Http\Requests\Task;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Contracts\Validation\Validator;
+use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Validation\Rule;
+use App\Enums\TaskPriority;
 
 class UpdateTaskPriorityRequest extends FormRequest
 {
@@ -15,6 +19,20 @@ class UpdateTaskPriorityRequest extends FormRequest
     }
 
     /**
+     * Handle a failed validation attempt
+     */
+    protected function failedValidation(Validator $validator): void
+    {
+        throw new HttpResponseException(
+            response()->json([
+                'status' => 'error',
+                'message' => 'Validation failed',
+                'errors' => $validator->errors(),
+            ], 422)
+        );
+    }
+
+    /**
      * Get the validation rules that apply to the request.
      *
      * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
@@ -22,7 +40,7 @@ class UpdateTaskPriorityRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'priority' => 'required|in:low,medium,high,critical'
+            'priority' => ['required', 'string', Rule::in([...TaskPriority::values()])],
         ];
     }
 }

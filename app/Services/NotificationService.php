@@ -213,6 +213,93 @@ class NotificationService
     }
 
     /**
+     * Create notification - task status changed
+     */
+    public function taskStatusChanged(
+        User $receiver,
+        Task $task,
+        User $sender
+    ): void {
+        try {
+            Notification::create([
+                'user_id' => $receiver->id,
+                'type' => NotificationType::TASK_STATUS_CHANGED,
+                'notifiable_type' => Task::class,
+                'notifiable_id' => $task->id,
+                'data' => [
+                    'sender_name' => $sender->name,
+                    'sender_id' => $sender->id,
+                    'message' => "{$sender->name} changed the status of the task:{$task->title}",
+                ]
+            ]);
+        } catch (\Throwable $e) {
+            throw NotificationException::createNotificationFailed(
+                notificationType: NotificationType::TASK_STATUS_CHANGED,
+                senderId: $sender->id,
+                previous: $e
+            );
+        }
+    }
+
+    /**
+     * Create notification - task priority changed
+     */
+    public function taskPriorityChanged(
+        User $receiver,
+        Task $task,
+        User $sender
+    ): void {
+        try {
+            Notification::create([
+                'user_id' => $receiver->id,
+                'type' => NotificationType::TASK_PRIORITY_CHANGED,
+                'notifiable_type' => Task::class,
+                'notifiable_id' => $task->id,
+                'data' => [
+                    'sender_name' => $sender->name,
+                    'sender_id' => $sender->id,
+                    'message' => "{$sender->name} changed the priority of the task:{$task->title}",
+                ]
+            ]);
+        } catch (\Throwable $e) {
+            throw NotificationException::createNotificationFailed(
+                notificationType: NotificationType::TASK_PRIORITY_CHANGED,
+                senderId: $sender->id,
+                previous: $e
+            );
+        }
+    } 
+
+    /**
+     * Create notification - task priority changed
+     */
+    public function taskDeleted(
+        User $receiver,
+        Task $task,
+        User $sender
+    ): void {
+        try {
+            Notification::create([
+                'user_id' => $receiver->id,
+                'type' => NotificationType::TASK_DELETED,
+                'notifiable_type' => Task::class,
+                'notifiable_id' => $task->id,
+                'data' => [
+                    'sender_name' => $sender->name,
+                    'sender_id' => $sender->id,
+                    'message' => "{$sender->name} deleted the task:{$task->title}",
+                ]
+            ]);
+        } catch (\Throwable $e) {
+            throw NotificationException::createNotificationFailed(
+                notificationType: NotificationType::TASK_DELETED,
+                senderId: $sender->id,
+                previous: $e
+            );
+        }
+    }    
+
+    /**
      * Get user notifications
      */
     public function getUserNotifications(

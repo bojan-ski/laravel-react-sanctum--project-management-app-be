@@ -74,4 +74,17 @@ class Task extends Model
 
         return false;
     }
+
+    public function canManageTask(User $user): bool
+    {
+        if ($this->created_by === $user->id) {
+            return true;
+        }
+
+        if ($this->project->isOwner($user)) {
+            return true;
+        }
+
+        return false;
+    }
 }

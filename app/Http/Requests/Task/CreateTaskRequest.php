@@ -3,6 +3,10 @@
 namespace App\Http\Requests\Task;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Contracts\Validation\Validator;
+use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Validation\Rule;
+use App\Enums\TaskPriority;
 
 class CreateTaskRequest extends FormRequest
 {
@@ -15,6 +19,20 @@ class CreateTaskRequest extends FormRequest
     }
 
     /**
+     * Handle a failed validation attempt
+     */
+    protected function failedValidation(Validator $validator): void
+    {
+        throw new HttpResponseException(
+            response()->json([
+                'status' => 'error',
+                'message' => 'Validation failed',
+                'errors' => $validator->errors(),
+            ], 422)
+        );
+    }
+
+    /**
      * Get the validation rules that apply to the request.
      *
      * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
@@ -22,11 +40,11 @@ class CreateTaskRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'assigned_to' => 'required|integer|exists:users,id',
-            'title' => 'required|string|min:3|max:64',
-            'description' => 'required|string|min:10|max:1500',
-            'priority' => 'required|in:low,medium,high,critical',
-            'due_date' => 'required|date',
+            'assigned_to' => ['required', 'integer', 'exists:users,id'],
+            'title' => ['required', 'string', 'min:3', 'max:64'],
+            'description' => ['required', 'string', 'min:200', 'max:1500'],
+            'priority' => ['required', 'string', Rule::in([...TaskPriority::values()])],
+            'due_date' => ['required', 'date', 'after_or_equal:today']
         ];
     }
 }

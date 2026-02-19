@@ -83,7 +83,7 @@ class ProjectMemberController extends Controller
     ): JsonResponse {
         $user = $request->user();
 
-        $this->memberService->checkBeforeNoLongerMember(
+        $this->memberService->checkMemberStatus(
             project: $project,
             member: $user
         );
@@ -124,7 +124,7 @@ class ProjectMemberController extends Controller
         Project $project,
         User $member
     ): JsonResponse {
-        $this->memberService->checkBeforeNoLongerMember(
+        $this->memberService->checkMemberStatus(
             $project,
             $member
         );
