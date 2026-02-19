@@ -5,16 +5,18 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use App\Http\Requests\Task\CreateTaskRequest;
+use App\Http\Resources\TaskResource;
 use App\Services\TaskService;
-use App\Models\Project;
-use App\Models\User;
 use App\Traits\ApiResponse;
+use App\Models\Project;
+use App\Models\Task;
+use App\Models\User;
 
 class TaskController extends Controller
 {
     use ApiResponse;
 
-    public function __construct(private TaskService $taskService) {}
+    public function __construct(protected readonly TaskService $taskService) {}
 
     /**
      * Display a listing of the resource.
@@ -37,16 +39,14 @@ class TaskController extends Controller
             return $this->error('Assigned user must be a project member!', 400);
         }
 
-        // DELETE ON PROJECT COMPLETION
         if ($assignee && $project->isOwner($assignee)) {
             return $this->error('Can not assign task to project owner!', 400);
         }
-        // DELETE ON PROJECT COMPLETION
 
         $response = $this->taskService->createTask(
-            $project,
-            $request->user(),
-            $request->validated()
+            project: $project,
+            projectOwner: $request->user(),
+            formData: $request->validated()
         );
 
         if (!$response) {
@@ -59,9 +59,14 @@ class TaskController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(Task $task)
     {
-        //
+        $taskDetails = $this->taskService->getTaskDetails($task);
+
+        return $this->success(
+            message: 'Task retrieved successfully',
+            data: new TaskResource($taskDetails),
+        );
     }
 
     /**

@@ -25,7 +25,6 @@ class CreateTaskRequest extends FormRequest
             'assigned_to' => 'required|integer|exists:users,id',
             'title' => 'required|string|min:3|max:64',
             'description' => 'required|string|min:10|max:1500',
-            // 'status' => 'nullable|in:todo,in_progress,review,done',
             'priority' => 'required|in:low,medium,high,critical',
             'due_date' => 'required|date',
         ];

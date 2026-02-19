@@ -22,23 +22,21 @@ class TaskService
     ): Task | bool {
         try {
             DB::transaction(function () use ($project, $projectOwner, $formData) {
-                // create task
                 $task = Task::create([
                     'project_id' => $project->id,
                     'created_by' => $projectOwner->id,
                     'assigned_to' => $formData['assigned_to'],
                     'title' => $formData['title'],
                     'description' => $formData['description'],
-                    'priority' => $formData['priority'] ?? 'low',
+                    'priority' => $formData['priority'],
                     'due_date' => $formData['due_date'],
                 ]);
 
-                // send notification            
                 $this->notificationService->taskAssigned(
-                    $task->assignee,
-                    $project,
-                    $task,
-                    $projectOwner
+                    receiver: $task->assignee,
+                    project: $project,
+                    task: $task,
+                    sender: $projectOwner
                 );
             });
 
@@ -50,5 +48,18 @@ class TaskService
 
             return false;
         }
+    }
+
+    /**
+     * Get selected task details
+     */
+    public function getTaskDetails(Task $task): Task
+    {
+        return $task->load([
+            'creator',
+            'assignee',
+            'project.owner',
+            'activities.user',
+        ]);
     }
 }

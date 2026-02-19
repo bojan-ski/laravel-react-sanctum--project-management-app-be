@@ -20,13 +20,11 @@ class TaskActivity extends Model
         'changes',
     ];
 
-    // related to task
     public function task(): BelongsTo
     {
         return $this->belongsTo(Task::class);
     }
 
-    // action related to user
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);

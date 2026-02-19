@@ -31,21 +31,47 @@ class Task extends Model
         'due_date' => 'date',
     ];
 
-    // get project
     public function project(): BelongsTo
     {
         return $this->belongsTo(Project::class);
     }
 
-    // task assigned to (user)
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
     public function assignee(): BelongsTo
     {
         return $this->belongsTo(User::class, 'assigned_to');
     }
 
-    // task activities
     public function activities()
     {
         return $this->hasMany(TaskActivity::class)->latest();
+    }
+
+    public function isOverdue(): bool
+    {
+        return $this->due_date &&
+            $this->due_date->isPast() &&
+            $this->status !== TaskStatus::DONE;
+    }
+
+    public function canUpdateStatus(User $user): bool
+    {
+        if ($this->created_by === $user->id) {
+            return true;
+        }
+
+        if ($this->assigned_to === $user->id) {
+            return true;
+        }
+
+        if ($this->project->isOwner($user)) {
+            return true;
+        }
+
+        return false;
     }
 }
