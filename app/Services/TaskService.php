@@ -2,8 +2,11 @@
 
 namespace App\Services;
 
+use Illuminate\Pagination\LengthAwarePaginator;
+use App\Exceptions\NotificationException;
 use App\Exceptions\TaskException;
 use App\Exceptions\TaskActivityException;
+use App\Enums\TaskStatus;
 use App\Models\User;
 use App\Models\Project;
 use App\Models\Task;
@@ -12,6 +15,50 @@ use App\Models\TaskActivity;
 class TaskService
 {
     public function __construct(protected readonly NotificationService $notificationService) {}
+
+    /**
+     * Get user's tasks with filters (created by or assigned to)
+     */
+    public function getUserTasks(
+        User $user,
+        string $ownership = 'all',
+        string $status = 'all',
+        string $priority = 'all',
+        int $perPage = 12
+    ): LengthAwarePaginator {
+        $query = Task::query();
+
+        switch ($ownership) {
+            case 'created':
+                $query->where('created_by', $user->id);
+                break;
+
+            case 'assigned':
+                $query->where('assigned_to', $user->id);
+                break;
+
+            case 'all':
+            default:
+                $query->where(function ($q) use ($user) {
+                    $q->where('created_by', $user->id)
+                        ->orWhere('assigned_to', $user->id);
+                });
+                break;
+        }
+
+        if ($status !== 'all') {
+            $query->where('status', $status);
+        }
+
+        if ($priority !== 'all') {
+            $query->where('priority', $priority);
+        }
+
+        return $query->with(['project', 'assignee', 'activities'])
+            ->withCount('activities')
+            ->latest()
+            ->paginate($perPage);
+    }
 
     /**
      * Create a new task
@@ -28,6 +75,7 @@ class TaskService
                 'assigned_to' => $formData['assigned_to'],
                 'title' => $formData['title'],
                 'description' => $formData['description'],
+                'status' => TaskStatus::TODO,
                 'priority' => $formData['priority'],
                 'due_date' => $formData['due_date'],
             ]);
@@ -65,7 +113,7 @@ class TaskService
         int $taskId,
         int $userId,
         string $action,
-        array $changes
+        array $changes = []
     ): void {
         try {
             TaskActivity::create([
@@ -84,17 +132,17 @@ class TaskService
      */
     public function statusChange(
         Task $task,
-        string $status
+        string $newStatus
     ): Task {
         $oldStatus = $task->status;
 
         try {
             $task->update([
-                'status' => $status
+                'status' => $newStatus
             ]);
 
             $this->logActivity($task->id, $task->created_by, 'status_changed', [
-                'status' => ['from' => $oldStatus, 'to' => $status]
+                'status' => ['from' => $oldStatus, 'to' => $newStatus]
             ]);
 
             $this->notificationService->taskStatusChanged(
@@ -104,6 +152,10 @@ class TaskService
             );
 
             return $task->fresh();
+        } catch (TaskActivityException $e) {
+            throw $e;
+        } catch (NotificationException $e) {
+            throw $e;
         } catch (\Throwable $e) {
             throw TaskException::changeTaskStatusFailed($task->created_by, $task->id);
         }
@@ -114,17 +166,17 @@ class TaskService
      */
     public function priorityChange(
         Task $task,
-        string $priority
+        string $newPriority
     ): Task {
         $oldPriority = $task->priority;
 
         try {
             $task->update([
-                'priority' => $priority
+                'priority' => $newPriority
             ]);
 
             $this->logActivity($task->id, $task->created_by, 'priority_changed', [
-                'priority' => ['from' => $oldPriority, 'to' => $priority]
+                'priority' => ['from' => $oldPriority, 'to' => $newPriority]
             ]);
 
             $this->notificationService->taskPriorityChanged(
@@ -134,6 +186,10 @@ class TaskService
             );
 
             return $task->fresh();
+        } catch (TaskActivityException $e) {
+            throw $e;
+        } catch (NotificationException $e) {
+            throw $e;
         } catch (\Throwable $e) {
             throw TaskException::changeTaskPriorityFailed($task->created_by, $task->id);
         }
@@ -142,7 +198,8 @@ class TaskService
     /**
      * Delete task
      */
-    public function deleteTask(Task $task): void {
+    public function deleteTask(Task $task): void
+    {
         try {
             $task->delete();
         } catch (\Throwable $e) {

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\ProjectStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -58,13 +59,9 @@ class Task extends Model
             $this->status !== TaskStatus::DONE;
     }
 
-    public function canUpdateStatus(User $user): bool
+    public function isCreator(User $user): bool
     {
         if ($this->created_by === $user->id) {
-            return true;
-        }
-
-        if ($this->assigned_to === $user->id) {
             return true;
         }
 
@@ -75,16 +72,8 @@ class Task extends Model
         return false;
     }
 
-    public function canManageTask(User $user): bool
+    public function isAssignee(User $user): bool
     {
-        if ($this->created_by === $user->id) {
-            return true;
-        }
-
-        if ($this->project->isOwner($user)) {
-            return true;
-        }
-
-        return false;
+        return $this->assigned_to === $user->id;
     }
 }

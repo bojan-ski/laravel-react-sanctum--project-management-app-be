@@ -72,6 +72,11 @@ class Project extends Model
     {
         return $this->hasMany(Task::class);
     }
+    
+    public function isProjectActive(): bool
+    {
+        return $this->status === ProjectStatus::ACTIVE;
+    }
 
     // get project statistics
     public function getStatistics(): array

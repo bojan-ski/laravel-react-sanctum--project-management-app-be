@@ -25,7 +25,7 @@ class IsTaskOwnerMiddleware
         if (!$user) return $this->error(message: 'Unauthorized', statusCode: 401);
         if (!$task) return $this->error(message: 'Not Found', statusCode: 404);
 
-        if (!$task->canManageTask($user)) {
+        if (!$task->isCreator($user)) {
             throw TaskException::notTaskOwner(
                 userId: $user->id,
                 taskId: $task->id,

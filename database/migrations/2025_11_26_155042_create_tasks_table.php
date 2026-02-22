@@ -22,6 +22,7 @@ return new class extends Migration
             $table->enum('priority', ['low', 'medium', 'high', 'critical']);
             $table->date('due_date');
             $table->timestamps();
+            
             $table->softDeletes();
 
             $table->index('project_id');

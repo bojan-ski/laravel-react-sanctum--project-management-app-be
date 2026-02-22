@@ -16,15 +16,17 @@ Route::middleware([
 Route::middleware([
     'auth:sanctum',
 ])->prefix('tasks')->group(function () {
+    Route::get('/', [TaskController::class, 'index'])
+        ->name('tasks.index');
     Route::get('/{task}', [TaskController::class, 'show'])
         ->name('tasks.show');
 
     Route::middleware(IsTaskOwnerMiddleware::class)->group(function () {
-        Route::patch('/tasks/{task}/status', [TaskController::class, 'updateStatus'])
+        Route::put('/{task}/status', [TaskController::class, 'updateStatus'])
             ->name('tasks.status.update');
-        Route::patch('/tasks/{task}/priority', [TaskController::class, 'updatePriority'])
+        Route::put('/{task}/priority', [TaskController::class, 'updatePriority'])
             ->name('tasks.priority.update');
-        Route::delete('/tasks/{task}', [TaskController::class, 'destroy'])
+        Route::delete('/{task}', [TaskController::class, 'destroy'])
             ->name('tasks.destroy');
     });
 });

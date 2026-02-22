@@ -20,6 +20,10 @@ class TaskActivity extends Model
         'changes',
     ];
 
+    protected $casts = [
+        'changes' => 'array',
+    ];
+
     public function task(): BelongsTo
     {
         return $this->belongsTo(Task::class);

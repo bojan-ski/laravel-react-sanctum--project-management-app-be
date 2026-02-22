@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\JsonResponse;
+use App\Http\Requests\Task\FilterUserTasksRequest;
 use App\Http\Requests\Task\CreateTaskRequest;
 use App\Http\Requests\Task\UpdateTaskPriorityRequest;
 use App\Http\Requests\Task\UpdateTaskStatusRequest;
@@ -30,9 +31,30 @@ class TaskController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(FilterUserTasksRequest $request): JsonResponse
     {
-        //
+        $filters = $request->validated();
+
+        $ownership = $filters['ownership'] ?? 'all';
+        $status = $filters['status'] ?? 'all';
+        $priority = $filters['status'] ?? 'all';
+
+        $tasks = $this->taskService->getUserTasks(
+            user: $request->user(),
+            ownership: $ownership,
+            status: $status,
+            priority: $priority,
+            perPage: 12
+        );
+
+        $tasks->setCollection(
+            TaskResource::collection($tasks)->collection
+        );
+
+        return $this->success(
+            message: 'User tasks retrieved',
+            data: $tasks
+        );
     }
 
     /**
@@ -102,7 +124,7 @@ class TaskController extends Controller
         try {
             $updatedTask = $this->taskService->statusChange(
                 task: $task,
-                status: $request->validated('status'),
+                newStatus: $request->validated('status'),
             );
 
             return $this->success(
@@ -143,7 +165,7 @@ class TaskController extends Controller
         try {
             $updatedTask = $this->taskService->priorityChange(
                 task: $task,
-                priority: $request->validated('priority'),
+                newPriority: $request->validated('priority'),
             );
 
             return $this->success(
@@ -182,12 +204,7 @@ class TaskController extends Controller
         try {
             $this->taskService->deleteTask($task);
 
-            return $this->success(
-                message: 'Task deleted',
-                data: [
-                    'id' => $task->id
-                ]
-            );
+            return $this->success(message: 'Task deleted');
         } catch (TaskException $e) {
             $e->report();
             return $this->error(
