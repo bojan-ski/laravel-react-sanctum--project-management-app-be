@@ -3,10 +3,12 @@
 namespace App\Services;
 
 use Illuminate\Pagination\LengthAwarePaginator;
-use App\Exceptions\NotificationException;
+use Illuminate\Http\UploadedFile;
 use App\Exceptions\TaskException;
 use App\Exceptions\TaskActivityException;
 use App\Enums\TaskStatus;
+use App\Enums\TaskActivityAction;
+use App\Exceptions\NotificationException;
 use App\Models\User;
 use App\Models\Project;
 use App\Models\Task;
@@ -14,7 +16,10 @@ use App\Models\TaskActivity;
 
 class TaskService
 {
-    public function __construct(protected readonly NotificationService $notificationService) {}
+    public function __construct(
+        protected readonly NotificationService $notificationService,
+        protected readonly DocumentService $documentService,
+    ) {}
 
     /**
      * Get user's tasks with filters (created by or assigned to)
@@ -75,7 +80,7 @@ class TaskService
                 'assigned_to' => $formData['assigned_to'],
                 'title' => $formData['title'],
                 'description' => $formData['description'],
-                'status' => TaskStatus::TODO,
+                'status' => TaskStatus::TO_DO,
                 'priority' => $formData['priority'],
                 'due_date' => $formData['due_date'],
             ]);
@@ -87,7 +92,9 @@ class TaskService
                 sender: $projectOwner
             );
 
-            return $task;
+            return $task->load(['project', 'creator', 'assignee']);
+        } catch (NotificationException $e) {
+            throw $e;
         } catch (\Throwable $e) {
             throw TaskException::createTaskFailed($projectOwner->id, $project->id);
         }
@@ -99,9 +106,9 @@ class TaskService
     public function getTaskDetails(Task $task): Task
     {
         return $task->load([
+            'project',
             'creator',
             'assignee',
-            'project.owner',
             'activities.user',
         ]);
     }
@@ -112,11 +119,11 @@ class TaskService
     private function logActivity(
         int $taskId,
         int $userId,
-        string $action,
-        array $changes = []
-    ): void {
+        TaskActivityAction $action,
+        array | string $changes
+    ): TaskActivity {
         try {
-            TaskActivity::create([
+            return TaskActivity::create([
                 'task_id' => $taskId,
                 'user_id' => $userId,
                 'action' => $action,
@@ -134,31 +141,30 @@ class TaskService
         Task $task,
         string $newStatus
     ): Task {
-        $oldStatus = $task->status;
+        $oldStatus = $task->status->value;
 
         try {
             $task->update([
                 'status' => $newStatus
             ]);
-
-            $this->logActivity($task->id, $task->created_by, 'status_changed', [
-                'status' => ['from' => $oldStatus, 'to' => $newStatus]
-            ]);
-
-            $this->notificationService->taskStatusChanged(
-                receiver: $task->assignee,
-                task: $task,
-                sender: $task->creator
-            );
-
-            return $task->fresh();
-        } catch (TaskActivityException $e) {
-            throw $e;
-        } catch (NotificationException $e) {
-            throw $e;
         } catch (\Throwable $e) {
             throw TaskException::changeTaskStatusFailed($task->created_by, $task->id);
         }
+
+        $this->logActivity(
+            taskId: $task->id,
+            userId: $task->created_by,
+            action: TaskActivityAction::STATUS_CHANGED,
+            changes: ['from' => $oldStatus, 'to' => $newStatus]
+        );
+
+        $this->notificationService->taskStatusChanged(
+            receiver: $task->assignee,
+            task: $task,
+            sender: $task->creator
+        );
+
+        return $task->fresh();
     }
 
     /**
@@ -168,31 +174,30 @@ class TaskService
         Task $task,
         string $newPriority
     ): Task {
-        $oldPriority = $task->priority;
+        $oldPriority = $task->priority->value;
 
         try {
             $task->update([
                 'priority' => $newPriority
             ]);
-
-            $this->logActivity($task->id, $task->created_by, 'priority_changed', [
-                'priority' => ['from' => $oldPriority, 'to' => $newPriority]
-            ]);
-
-            $this->notificationService->taskPriorityChanged(
-                receiver: $task->assignee,
-                task: $task,
-                sender: $task->creator
-            );
-
-            return $task->fresh();
-        } catch (TaskActivityException $e) {
-            throw $e;
-        } catch (NotificationException $e) {
-            throw $e;
         } catch (\Throwable $e) {
             throw TaskException::changeTaskPriorityFailed($task->created_by, $task->id);
         }
+
+        $this->logActivity(
+            taskId: $task->id,
+            userId: $task->created_by,
+            action: TaskActivityAction::PRIORITY_CHANGED,
+            changes: ['from' => $oldPriority, 'to' => $newPriority]
+        );
+
+        $this->notificationService->taskPriorityChanged(
+            receiver: $task->assignee,
+            task: $task,
+            sender: $task->creator
+        );
+
+        return $task->fresh();
     }
 
     /**
@@ -200,20 +205,41 @@ class TaskService
      */
     public function deleteTask(Task $task): void
     {
+
         try {
+            $this->notificationService->taskDeleted(
+                receiver: $task->assignee,
+                task: $task,
+                sender: $task->creator
+            );
+
             $task->delete();
+        } catch (NotificationException $e) {
+            throw $e;
         } catch (\Throwable $e) {
             throw TaskException::deleteTaskFailed($task->id, $e);
         }
+    }
 
-        $this->logActivity($task->id, $task->created_by, 'deleted', [
-            'title' => $task->title,
-        ]);
+    /**
+     * Delete task
+     */
+    public function uploadTaskDocument(
+        User $uploader,
+        Task $task,
+        UploadedFile $file
+    ): void {
+        $activity = $this->logActivity(
+            taskId: $task->id,
+            userId: $uploader->id,
+            action: TaskActivityAction::DOCUMENT_UPLOADED,
+            changes: $file->getClientOriginalName() . ' uploaded'
+        );
 
-        $this->notificationService->taskDeleted(
-            receiver: $task->assignee,
-            task: $task,
-            sender: $task->creator
+        $this->documentService->uploadDocument(
+            uploader: $uploader,
+            documentable: $activity,
+            file: $file
         );
     }
 }

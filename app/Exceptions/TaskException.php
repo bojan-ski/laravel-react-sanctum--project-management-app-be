@@ -10,6 +10,8 @@ class TaskException extends Exception
 {
     public const TYPE_GENERAL = 'task_feature_error';
     public const TYPE_NOT_TASK_OWNER = 'not_task_owner';
+    public const TYPE_NOT_ASSIGNED_TO_TASK = 'not_assigned_to_task';
+    public const TYPE_CAN_NOT_ACCESS_TASK = 'can_not_access_task';
     public const TYPE_CREATE_TASK_FAILED = 'create_task_failed';
     public const TYPE_INVALID_TASK_STATUS_CHANGE = 'invalid_task_status_change';
     public const TYPE_INVALID_TASK_PRIORITY_CHANGE = 'invalid_task_priority_change';
@@ -44,6 +46,40 @@ class TaskException extends Exception
             taskId: $taskId,
             message: 'You do not have permission to manage this task!',
             type: self::TYPE_NOT_TASK_OWNER,
+            statusCode: 403,
+            logLevel: 'warning',
+        );
+    }
+
+    /**
+     * Not assigned to task
+     */
+    public static function notAssignedToTask(
+        ?int $userId = null,
+        ?int $taskId = null,
+    ): self {
+        return new self(
+            userId: $userId,
+            taskId: $taskId,
+            message: 'You are not assigned to selected task!',
+            type: self::TYPE_NOT_ASSIGNED_TO_TASK,
+            statusCode: 403,
+            logLevel: 'warning',
+        );
+    }
+
+    /**
+     * Not assigned to task
+     */
+    public static function canNotAccessTask(
+        ?int $userId = null,
+        ?int $taskId = null,
+    ): self {
+        return new self(
+            userId: $userId,
+            taskId: $taskId,
+            message: 'You can not access the task!',
+            type: self::TYPE_CAN_NOT_ACCESS_TASK,
             statusCode: 403,
             logLevel: 'warning',
         );

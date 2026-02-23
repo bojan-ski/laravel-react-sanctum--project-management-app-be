@@ -25,10 +25,13 @@ class TaskResource extends JsonResource
             'project' => [
                 'id' => $this->project->id,
                 'title' => $this->project->title,
+                'status' => $this->project->status,
+                'is_active' => $this->project->isProjectActive(),
             ],
             'creator' => [
                 'id' => $this->creator->id,
                 'name' => $this->creator->name,
+                'email' => $this->assignee->email,
                 'avatar' => $this->creator->avatar ?? null,
             ],
             'assignee' => $this->assignee ? [
@@ -37,9 +40,11 @@ class TaskResource extends JsonResource
                 'email' => $this->assignee->email,
                 'avatar' => $this->assignee->avatar ?? null,
             ] : null,
-            'is_project_active' => $this->project->isProjectActive(),
-            'activities_count' => $this->activities->count(),
-            'activities' => $this->activities,
+            'task_in_progress' => $this->isTaskInProgress(),
+            'activities' => $this->when(
+                $this->relationLoaded('activities'),
+                fn() => TaskActivityResource::collection($this->activities)
+            ),
             'is_creator' => $this->isCreator($request->user()),
             'is_assignee' => $this->isAssignee($request->user()),
             'created_at' => $this->created_at->toIso8601String(),

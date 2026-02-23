@@ -18,12 +18,10 @@ return new class extends Migration
             $table->foreignId('assigned_to')->nullable()->constrained('users')->nullOnDelete();
             $table->string('title');
             $table->text('description');
-            $table->enum('status', ['todo', 'in_progress', 'review', 'done'])->default('todo');
+            $table->enum('status', ['to_do', 'in_progress', 'review', 'done'])->default('to_do');
             $table->enum('priority', ['low', 'medium', 'high', 'critical']);
             $table->date('due_date');
             $table->timestamps();
-            
-            $table->softDeletes();
 
             $table->index('project_id');
             $table->index('created_by');

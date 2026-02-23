@@ -2,17 +2,16 @@
 
 namespace App\Models;
 
-use App\Enums\ProjectStatus;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Enums\TaskPriority;
 use App\Enums\TaskStatus;
 
 class Task extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
 
     protected $table = 'tasks';
     protected $fillable = [
@@ -37,7 +36,7 @@ class Task extends Model
         return $this->belongsTo(Project::class);
     }
 
-    public function creator()
+    public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
     }
@@ -47,9 +46,14 @@ class Task extends Model
         return $this->belongsTo(User::class, 'assigned_to');
     }
 
-    public function activities()
+    public function activities(): HasMany
     {
         return $this->hasMany(TaskActivity::class)->latest();
+    }
+
+    public function isTaskInProgress(): bool
+    {
+        return $this->status === TaskStatus::IN_PROGRESS;
     }
 
     public function isOverdue(): bool
@@ -75,5 +79,10 @@ class Task extends Model
     public function isAssignee(User $user): bool
     {
         return $this->assigned_to === $user->id;
+    }
+
+    public function canView(User $user): bool
+    {
+        return $this->isCreator($user) || $this->isAssignee($user);
     }
 }

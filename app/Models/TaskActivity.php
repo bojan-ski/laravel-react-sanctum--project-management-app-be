@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use App\Traits\HasDocument;
+use App\Enums\TaskActivityAction;
 
 class TaskActivity extends Model
 {
@@ -21,6 +22,7 @@ class TaskActivity extends Model
     ];
 
     protected $casts = [
+        'action' => TaskActivityAction::class,
         'changes' => 'array',
     ];
 

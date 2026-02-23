@@ -7,11 +7,13 @@ use App\Http\Requests\Task\FilterUserTasksRequest;
 use App\Http\Requests\Task\CreateTaskRequest;
 use App\Http\Requests\Task\UpdateTaskPriorityRequest;
 use App\Http\Requests\Task\UpdateTaskStatusRequest;
+use App\Http\Requests\Task\AssigneeDocumentRequest;
 use App\Http\Resources\TaskResource;
 use App\Exceptions\TaskException;
 use App\Exceptions\NotificationException;
 use App\Exceptions\ProjectMemberException;
 use App\Exceptions\TaskActivityException;
+use App\Exceptions\DocumentException;
 use App\Services\ProjectMemberService;
 use App\Services\TaskService;
 use App\Traits\ApiResponse;
@@ -37,7 +39,7 @@ class TaskController extends Controller
 
         $ownership = $filters['ownership'] ?? 'all';
         $status = $filters['status'] ?? 'all';
-        $priority = $filters['status'] ?? 'all';
+        $priority = $filters['priority'] ?? 'all';
 
         $tasks = $this->taskService->getUserTasks(
             user: $request->user(),
@@ -86,13 +88,13 @@ class TaskController extends Controller
                 message: $e->getMessage(),
                 statusCode: $e->getStatusCode()
             );
-        } catch (TaskException $e) {
+        } catch (NotificationException $e) {
             $e->report();
             return $this->error(
                 message: $e->getMessage(),
                 statusCode: $e->getStatusCode()
             );
-        } catch (NotificationException $e) {
+        } catch (TaskException $e) {
             $e->report();
             return $this->error(
                 message: $e->getMessage(),
@@ -172,7 +174,7 @@ class TaskController extends Controller
                 message: 'Task priority updated',
                 data: [
                     'id' => $task->id,
-                    'status' => $updatedTask->priority
+                    'priority' => $updatedTask->priority
                 ]
             );
         } catch (TaskException $e) {
@@ -205,19 +207,43 @@ class TaskController extends Controller
             $this->taskService->deleteTask($task);
 
             return $this->success(message: 'Task deleted');
+        } catch (NotificationException $e) {
+            $e->report();
+            return $this->error(
+                message: $e->getMessage(),
+                statusCode: $e->getStatusCode()
+            );
         } catch (TaskException $e) {
             $e->report();
             return $this->error(
                 message: $e->getMessage(),
                 statusCode: $e->getStatusCode()
             );
+        }
+    }
+
+    /**
+     * Upload task/assignee document.
+     */
+    public function uploadTaskDocument(
+        AssigneeDocumentRequest $request,
+        Task $task
+    ): JsonResponse {
+        try {
+            $this->taskService->uploadTaskDocument(
+                uploader: $request->user(),
+                task: $task,
+                file: $request->validated('document_path')
+            );
+
+            return $this->success(message: 'Document uploaded');
         } catch (TaskActivityException $e) {
             $e->report();
             return $this->error(
                 message: $e->getMessage(),
                 statusCode: $e->getStatusCode()
             );
-        } catch (NotificationException $e) {
+        } catch (DocumentException $e) {
             $e->report();
             return $this->error(
                 message: $e->getMessage(),

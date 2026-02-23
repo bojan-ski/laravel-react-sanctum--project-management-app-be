@@ -5,6 +5,7 @@ namespace App\Exceptions;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 use Exception;
+use App\Enums\TaskActivityAction;
 
 class TaskActivityException extends Exception
 {
@@ -17,7 +18,7 @@ class TaskActivityException extends Exception
     public function __construct(
         private readonly ?int $userId = null,
         private readonly ?int $taskId = null,
-        private readonly ?string $activity = null,
+        private readonly ?TaskActivityAction $activity = null,
         string $message = 'Task activity error',
         int $code = 0,
         private readonly string $type = self::TYPE_GENERAL,
@@ -34,7 +35,7 @@ class TaskActivityException extends Exception
     public static function logTaskActivityFailed(
         ?int $userId = null,
         ?int $taskId = null,
-        ?string $activity = null,
+        ?TaskActivityAction $activity = null,
         ?Throwable $previous = null,
     ): self {
         return new self(

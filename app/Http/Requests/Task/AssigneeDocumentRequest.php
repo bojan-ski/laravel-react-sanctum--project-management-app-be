@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Http\Requests\Project;
+namespace App\Http\Requests\Task;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Http\Exceptions\HttpResponseException;
 
-class ProjectRequest extends FormRequest
+class AssigneeDocumentRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -38,9 +38,6 @@ class ProjectRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'title' => 'required|string|max:64',
-            'description' => 'required|string|min:300|max:3000',
-            'deadline' => 'required|date|after_or_equal:today',
             'document_path' => 'nullable|file|mimes:pdf,doc,docx|max:1024'
         ];
     }

@@ -15,8 +15,8 @@ return new class extends Migration
             $table->id();
             $table->foreignId('task_id')->constrained('tasks')->onDelete('cascade');
             $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
-            $table->string('action');
-            $table->text('changes');
+            $table->enum('action', ['status_changed', 'priority_changed', 'document_uploaded']);
+            $table->string('changes');
             $table->timestamps();
 
             $table->index('task_id');

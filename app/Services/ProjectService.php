@@ -79,8 +79,7 @@ class ProjectService
                 $project = Project::create([
                     'title' => $formData['title'],
                     'description' => $formData['description'],
-                    'deadline' => $formData['deadline'],
-                    'document_path' => $formData['document_path'] ?? null
+                    'deadline' => $formData['deadline']
                 ]);
 
                 $project->members()->attach($user->id, [

@@ -47,6 +47,8 @@ class DocumentService
         Model $documentable,
         UploadedFile $file,
     ): void {
+        $storagePath = null;
+        
         try {
             DB::transaction(function () use ($file, $documentable, $uploader) {
                 $storagePath = $this->generateStoragePath($documentable, $file);

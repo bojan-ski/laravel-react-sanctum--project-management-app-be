@@ -3,6 +3,8 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\TaskController;
 use App\Http\Middleware\IsProjectOwnerMiddleware;
+use App\Http\Middleware\IsTaskCreatorOrAssigneeMiddleware;
+use App\Http\Middleware\IsTaskAssigneeMiddleware;
 use App\Http\Middleware\IsTaskOwnerMiddleware;
 
 Route::middleware([
@@ -13,13 +15,20 @@ Route::middleware([
         ->name('tasks.store');
 });
 
+Route::get('/tasks', [TaskController::class, 'index'])
+    ->middleware('auth:sanctum')
+    ->name('tasks.index');
+
 Route::middleware([
     'auth:sanctum',
+    IsTaskCreatorOrAssigneeMiddleware::class
 ])->prefix('tasks')->group(function () {
-    Route::get('/', [TaskController::class, 'index'])
-        ->name('tasks.index');
     Route::get('/{task}', [TaskController::class, 'show'])
         ->name('tasks.show');
+
+    Route::post('/{task}/document', [TaskController::class, 'uploadTaskDocument'])
+        ->middleware(IsTaskAssigneeMiddleware::class)
+        ->name('tasks.document.upload');
 
     Route::middleware(IsTaskOwnerMiddleware::class)->group(function () {
         Route::put('/{task}/status', [TaskController::class, 'updateStatus'])
