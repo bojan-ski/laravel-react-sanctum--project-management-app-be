@@ -17,29 +17,6 @@ class NotificationService
     /**
      * Create notification - project invitation
      */
-    // public function projectInvitation(
-    //     User $invitee,
-    //     Project $project,
-    //     User $inviter
-    // ): Notification {
-    //     $project->members()->attach($invitee->id, [
-    //         'joined_at' => now(),
-    //     ]);
-
-    //     return Notification::create([
-    //         'user_id' => $invitee->id,
-    //         'type' => NotificationType::INVITATION,
-    //         'notifiable_type' => Project::class,
-    //         'notifiable_id' => $project->id,
-    //         'data' => [
-    //             'inviter_name' => $inviter->name,
-    //             'inviter_id' => $inviter->id,
-    //             'message' => "{$inviter->name} invited you to join project: {$project->title}",
-    //         ],
-    //         'action_taken' => InvitationStatus::ACCEPTED,
-    //         'read_at' => now(),
-    //     ]);
-    // }
     public function projectInvitation(
         User $invitee,
         Project $project,
@@ -268,7 +245,7 @@ class NotificationService
                 previous: $e
             );
         }
-    } 
+    }
 
     /**
      * Create notification - task priority changed
@@ -297,7 +274,7 @@ class NotificationService
                 previous: $e
             );
         }
-    }    
+    }
 
     /**
      * Get user notifications

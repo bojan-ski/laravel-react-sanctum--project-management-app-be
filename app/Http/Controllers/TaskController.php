@@ -207,6 +207,12 @@ class TaskController extends Controller
             $this->taskService->deleteTask($task);
 
             return $this->success(message: 'Task deleted');
+        } catch (DocumentException $e) {
+            $e->report();
+            return $this->error(
+                message: $e->getMessage(),
+                statusCode: $e->getStatusCode()
+            );
         } catch (NotificationException $e) {
             $e->report();
             return $this->error(
@@ -233,7 +239,7 @@ class TaskController extends Controller
             $this->taskService->uploadTaskDocument(
                 uploader: $request->user(),
                 task: $task,
-                file: $request->validated('document_path')
+                file: $request->validated('document')
             );
 
             return $this->success(message: 'Document uploaded');

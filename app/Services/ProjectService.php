@@ -6,9 +6,12 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Pagination\LengthAwarePaginator;
 use App\Exceptions\ProjectException;
+use App\Exceptions\DocumentException;
+use App\Exceptions\NotificationException;
 use App\Enums\TaskStatus;
 use App\Models\User;
 use App\Models\Project;
+use App\Models\Task;
 
 class ProjectService
 {
@@ -94,6 +97,8 @@ class ProjectService
                     );
                 }
             });
+        } catch (DocumentException $e) {
+            throw $e;
         } catch (\Throwable $e) {
             throw ProjectException::createProjectFailed($user->id, $e);
         }
@@ -105,9 +110,10 @@ class ProjectService
     public function getProjectDetails(Project $project): Project
     {
         return $project->load([
-            'owner:id,name,email',
-            'members:id,name,email',
-        ])->loadCount(['members', 'tasks']);
+            'owner',
+            'members',
+            'tasks'
+        ]);
     }
 
     /**
@@ -126,18 +132,6 @@ class ProjectService
                 sender: $owner
             );
         }
-
-        // $members = $project->members()->get();
-
-        // foreach ($members as $member) {
-        //     if ($member->id !== $owner->id) {
-        //         $this->notificationService->projectUpdated(
-        //             receiver: $member,
-        //             project: $project,
-        //             sender: $owner
-        //         );
-        //     }
-        // }
     }
 
     /**
@@ -163,14 +157,16 @@ class ProjectService
                 }
 
                 $project->update($formData);
-
-                $this->notifyMembersOfUpdate($project, $project->owner);
             });
-
-            return $project->fresh(['owner', 'members']);
+        } catch (DocumentException $e) {
+            throw $e;
         } catch (\Throwable $e) {
             throw ProjectException::updateProjectFailed($project->id, $e);
         }
+
+        $this->notifyMembersOfUpdate($project, $project->owner);
+
+        return $project->fresh();
     }
 
     /**
@@ -184,13 +180,13 @@ class ProjectService
             $project->update([
                 'status' => $status
             ]);
-
-            $this->notifyMembersOfUpdate($project, $project->owner);
-
-            return $project->fresh(['owner', 'members']);
         } catch (\Throwable $e) {
             throw ProjectException::changeProjectStatusFailed($project->id);
         }
+
+        $this->notifyMembersOfUpdate($project, $project->owner);
+
+        return $project->fresh();
     }
 
     /**
@@ -209,18 +205,6 @@ class ProjectService
                 sender: $owner
             );
         }
-
-        // $members = $project->members()->get();
-
-        // foreach ($members as $member) {
-        //     if ($member->id !== $owner->id) {
-        //         $this->notificationService->projectDeleted(
-        //             receiver: $member,
-        //             project: $project,
-        //             sender: $owner
-        //         );
-        //     }
-        // }
     }
 
     /**
@@ -230,14 +214,20 @@ class ProjectService
     {
         try {
             DB::transaction(function () use ($project) {
-                if ($project->hasDocument()) {
-                    $this->documentService->deleteDocument($project->document);
-                }
+                $this->documentService->deleteDocumentDirectory($project);
+
+                $project->tasks()->each(function (Task $task) {
+                    $this->documentService->deleteDocumentDirectory($task);
+                });
 
                 $this->notifyMembersOfDeletion($project, $project->owner);
 
                 $project->delete();
             });
+        } catch (DocumentException $e) {
+            throw $e;
+        } catch (NotificationException $e) {
+            throw $e;
         } catch (\Throwable $e) {
             throw ProjectException::deleteProjectFailed($project->id, $e);
         }

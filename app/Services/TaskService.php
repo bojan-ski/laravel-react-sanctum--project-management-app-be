@@ -3,11 +3,13 @@
 namespace App\Services;
 
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Http\UploadedFile;
 use App\Exceptions\TaskException;
 use App\Exceptions\TaskActivityException;
 use App\Enums\TaskStatus;
 use App\Enums\TaskActivityAction;
+use App\Exceptions\DocumentException;
 use App\Exceptions\NotificationException;
 use App\Models\User;
 use App\Models\Project;
@@ -205,15 +207,20 @@ class TaskService
      */
     public function deleteTask(Task $task): void
     {
-
         try {
-            $this->notificationService->taskDeleted(
-                receiver: $task->assignee,
-                task: $task,
-                sender: $task->creator
-            );
+            DB::transaction(function () use ($task) {
+                $this->documentService->deleteDocumentDirectory($task);
 
-            $task->delete();
+                $this->notificationService->taskDeleted(
+                    receiver: $task->assignee,
+                    task: $task,
+                    sender: $task->creator
+                );
+
+                $task->delete();
+            });
+        } catch (DocumentException $e) {
+            throw $e;
         } catch (NotificationException $e) {
             throw $e;
         } catch (\Throwable $e) {
@@ -222,7 +229,7 @@ class TaskService
     }
 
     /**
-     * Delete task
+     * Upload task/assignee document
      */
     public function uploadTaskDocument(
         User $uploader,
@@ -239,7 +246,8 @@ class TaskService
         $this->documentService->uploadDocument(
             uploader: $uploader,
             documentable: $activity,
-            file: $file
+            file: $file,
+            storagePath: "documents/task/{$task->id}"
         );
     }
 }

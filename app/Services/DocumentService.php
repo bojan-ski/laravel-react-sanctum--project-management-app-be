@@ -29,12 +29,18 @@ class DocumentService
      */
     private function generateStoragePath(
         Model $documentable,
-        UploadedFile $file
+        UploadedFile $file,
+        ?string $customPath = null
     ): string {
-        $modelType = strtolower(class_basename($documentable));
-        $modelId = $documentable->getKey();
         $extension = strtolower($file->getClientOriginalExtension());
         $filename = Str::uuid() . '.' . $extension;
+
+        if ($customPath) {
+            return "{$customPath}/{$filename}";
+        }
+
+        $modelType = strtolower(class_basename($documentable));
+        $modelId = $documentable->getKey();
 
         return "documents/{$modelType}/{$modelId}/{$filename}";
     }
@@ -46,16 +52,17 @@ class DocumentService
         User $uploader,
         Model $documentable,
         UploadedFile $file,
+        ?string $storagePath = null
     ): void {
-        $storagePath = null;
-        
+        $resolvedPath = null;
+
         try {
-            DB::transaction(function () use ($file, $documentable, $uploader) {
-                $storagePath = $this->generateStoragePath($documentable, $file);
+            DB::transaction(function () use ($file, $documentable, $uploader, $storagePath, &$resolvedPath) {
+                $resolvedPath = $this->generateStoragePath($documentable, $file, $storagePath);
 
                 $path = $file->storeAs(
-                    dirname($storagePath),
-                    basename($storagePath),
+                    dirname($resolvedPath),
+                    basename($resolvedPath),
                     'public'
                 );
 
@@ -68,8 +75,8 @@ class DocumentService
                 ]);
             });
         } catch (\Throwable $e) {
-            if ($storagePath) {
-                Storage::disk('public')->delete($storagePath);
+            if ($resolvedPath) {
+                Storage::disk('public')->delete($resolvedPath);
             }
 
             throw DocumentException::uploadDocumentFailed(
@@ -93,7 +100,7 @@ class DocumentService
             });
         } catch (\Throwable $e) {
             throw DocumentException::deleteDocumentFailed(
-                documentId: $document->id,
+                documentableId: $document->id,
                 previous: $e
             );
         }
@@ -102,35 +109,16 @@ class DocumentService
     /**
      * Delete document directory
      */
-    private function deleteDocumentDirectory(Document $document): void
+    public function deleteDocumentDirectory(Model $documentable): void
     {
+        $modelType = strtolower(class_basename($documentable));
+        $modelId = $documentable->getKey();
+
         try {
-            $documentable = $document->documentable;
-
-            $documentableType = strtolower(class_basename($documentable));
-            $documentableId = $documentable->getKey();
-
-            Storage::disk('public')->deleteDirectory("documents/{$documentableType}/{$documentableId}");
+            Storage::disk('public')->deleteDirectory("documents/{$modelType}/{$modelId}");
         } catch (\Throwable $e) {
             throw DocumentException::deleteDocumentFailed(
-                documentId: $documentableId,
-                previous: $e
-            );
-        }
-    }
-
-    /**
-     * Delete document
-     */
-    public function deleteDocument(Document $document): void
-    {
-        try {
-            $this->deleteDocumentDirectory($document);
-
-            $document->delete();
-        } catch (\Throwable $e) {
-            throw DocumentException::deleteDocumentFailed(
-                documentId: $document->id,
+                documentableId: $modelId,
                 previous: $e
             );
         }

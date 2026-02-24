@@ -41,7 +41,7 @@ class ProjectRequest extends FormRequest
             'title' => 'required|string|max:64',
             'description' => 'required|string|min:300|max:3000',
             'deadline' => 'required|date|after_or_equal:today',
-            'document_path' => 'nullable|file|mimes:pdf,doc,docx|max:1024'
+            'document' => 'nullable|file|mimes:pdf,doc,docx|max:1024'
         ];
     }
 }

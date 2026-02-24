@@ -38,7 +38,7 @@ class AssigneeDocumentRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'document_path' => 'nullable|file|mimes:pdf,doc,docx|max:1024'
+            'document' => 'required|file|mimes:pdf,doc,docx|max:1024'
         ];
     }
 }

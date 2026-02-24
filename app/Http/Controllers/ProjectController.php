@@ -11,6 +11,7 @@ use App\Http\Resources\ProjectDataResource;
 use App\Http\Resources\ProjectResource;
 use App\Exceptions\ProjectException;
 use App\Exceptions\DocumentException;
+use App\Exceptions\NotificationException;
 use App\Services\ProjectService;
 use App\Traits\ApiResponse;
 use App\Models\Project;
@@ -57,7 +58,7 @@ class ProjectController extends Controller
             $this->projectService->createProject(
                 user: $request->user(),
                 formData: $request->validated(),
-                file: $request->file('document_path') ?? null
+                file: $request->file('document') ?? null
             );
 
             return $this->success(message: 'Project created');
@@ -111,12 +112,18 @@ class ProjectController extends Controller
             $updatedProject = $this->projectService->updateProject(
                 project: $project,
                 formData: $request->validated(),
-                file: $request->file('document_path') ?? null
+                file: $request->file('document') ?? null
             );
 
             return $this->success(
                 message: 'Project updated',
                 data: new ProjectCardResource($updatedProject)
+            );
+        } catch (DocumentException $e) {
+            $e->report();
+            return $this->error(
+                message: $e->getMessage(),
+                statusCode: $e->getStatusCode()
             );
         } catch (ProjectException $e) {
             $e->report();
@@ -124,7 +131,7 @@ class ProjectController extends Controller
                 message: $e->getMessage(),
                 statusCode: $e->getStatusCode()
             );
-        } catch (DocumentException $e) {
+        } catch (NotificationException $e) {
             $e->report();
             return $this->error(
                 message: $e->getMessage(),
@@ -159,6 +166,12 @@ class ProjectController extends Controller
                 message: $e->getMessage(),
                 statusCode: $e->getStatusCode()
             );
+        } catch (NotificationException $e) {
+            $e->report();
+            return $this->error(
+                message: $e->getMessage(),
+                statusCode: $e->getStatusCode()
+            );
         }
     }
 
@@ -171,13 +184,19 @@ class ProjectController extends Controller
             $this->projectService->deleteProject($project);
 
             return $this->success(message: 'Project deleted');
-        } catch (ProjectException $e) {
+        } catch (DocumentException $e) {
             $e->report();
             return $this->error(
                 message: $e->getMessage(),
                 statusCode: $e->getStatusCode()
             );
-        } catch (DocumentException $e) {
+        } catch (NotificationException $e) {
+            $e->report();
+            return $this->error(
+                message: $e->getMessage(),
+                statusCode: $e->getStatusCode()
+            );
+        } catch (ProjectException $e) {
             $e->report();
             return $this->error(
                 message: $e->getMessage(),

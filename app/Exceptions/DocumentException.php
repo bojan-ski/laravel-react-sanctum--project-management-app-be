@@ -90,11 +90,11 @@ class DocumentException extends Exception
      * Delete document failed
      */
     public static function deleteDocumentFailed(
-        ?int $documentId = null,
+        ?int $documentableId = null,
         ?Throwable $previous = null,
     ): self {
         return new self(
-            documentId: $documentId,
+            documentableId: $documentableId,
             message: 'Failed to delete document!',
             type: self::TYPE_DOCUMENT_DELETE_FAILED,
             statusCode: 500,
