@@ -85,4 +85,9 @@ class Task extends Model
     {
         return $this->isCreator($user) || $this->isAssignee($user);
     }
+
+    public function messages(): HasMany
+    {
+        return $this->hasMany(Message::class)->oldest();
+    }
 }
