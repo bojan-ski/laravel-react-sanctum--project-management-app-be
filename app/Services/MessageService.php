@@ -3,13 +3,10 @@
 namespace App\Services;
 
 use Illuminate\Database\Eloquent\Collection;
-use App\Events\MessageSent;
-use App\Events\MessageDeleted;
 use App\Exceptions\MessageException;
 use App\Models\Message;
 use App\Models\Task;
 use App\Models\User;
-use Pusher\Pusher;
 
 class MessageService
 {
@@ -27,42 +24,15 @@ class MessageService
     }
 
     /**
-     * Check if user is present
-     */
-    private function isUserPresentOnTask(
-        int $taskId,
-        int $userId
-    ): bool {
-        try {
-            $pusher = new Pusher(
-                config('broadcasting.connections.pusher.key'),
-                config('broadcasting.connections.pusher.secret'),
-                config('broadcasting.connections.pusher.app_id'),
-                ['cluster' => config('broadcasting.connections.pusher.options.cluster')]
-            );
-
-            $channelName = "presence-task.{$taskId}";
-            $response = $pusher->getPresenceUsers($channelName);
-
-            $userIds = array_column($response->users ?? [], 'id');
-
-            return in_array($userId, $userIds);
-        } catch (\Throwable $e) {
-            return false;
-        }
-    }
-
-    /**
      * Send a new message
      */
     public function sendMessage(
         Task $task,
         User $messageSender,
-        User $messageReceiver,
         string $message
     ): ?Message {
         try {
-            $message = Message::create([
+            return Message::create([
                 'task_id' => $task->id,
                 'user_id' => $messageSender->id,
                 'message' => $message,
@@ -70,20 +40,6 @@ class MessageService
         } catch (\Throwable $e) {
             throw MessageException::createMessageFailed($task->id, $messageSender->id, $e);
         }
-
-        $message->load('user');
-
-        broadcast(new MessageSent($message))->toOthers();
-
-        if (!$this->isUserPresentOnTask($task->id, $messageReceiver->id)) {
-            $this->notificationService->newTaskMessage(
-                receiver: $messageReceiver,
-                task: $task,
-                sender: $messageSender
-            );
-        }
-
-        return $message;
     }
 
     /**
@@ -123,17 +79,12 @@ class MessageService
     /**
      * Delete a message
      */
-    public function deleteMessage(
-        int $userId,
-        int $taskId,
-        Message $message
-    ): void {
+    public function deleteMessage(Message $message): void
+    {
         try {
-            broadcast(new MessageDeleted($taskId, $message->id))->toOthers();
-
             $message->delete();
         } catch (\Throwable $e) {
-            throw MessageException::deleteMessageFailed($message->id, $userId, $e);
+            throw MessageException::deleteMessageFailed($message->id, $message->user_id, $e);
         }
     }
 }

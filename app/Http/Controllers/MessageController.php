@@ -38,14 +38,10 @@ class MessageController extends Controller
         SendMessageRequest $request,
         Task $task
     ): JsonResponse {
-        $user = $request->user();
-        $messageReceiver = $task->isCreator($user) ? $task->assignee : $task->creator;
-
         try {
             $message = $this->messageService->sendMessage(
                 task: $task,
-                messageSender: $user,
-                messageReceiver: $messageReceiver,
+                messageSender: $request->user(),
                 message: $request->validated('message')
             );
 
@@ -98,11 +94,7 @@ class MessageController extends Controller
         );
 
         try {
-            $this->messageService->deleteMessage(
-                userId: $request->user()->id,
-                taskId: $task->id,
-                message: $message,
-            );
+            $this->messageService->deleteMessage($message);
 
             return $this->success(
                 message: 'Message deleted',
