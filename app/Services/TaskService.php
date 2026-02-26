@@ -112,6 +112,7 @@ class TaskService
             'creator',
             'assignee',
             'activities.user',
+            'messages.user',
         ]);
     }
 

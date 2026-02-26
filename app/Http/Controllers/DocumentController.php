@@ -57,7 +57,7 @@ class DocumentController extends Controller
         }
 
         try {
-            $this->documentService->deleteDocument($document);
+            $this->documentService->deleteDocumentPath($document);
 
             return $this->success(message: 'Document deleted');
         } catch (DocumentException $e) {

@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\DB;
 use App\Exceptions\NotificationException;
 use App\Enums\NotificationType;
 use App\Enums\InvitationStatus;
+use App\Models\Message;
 use App\Models\Task;
 use App\Models\Notification;
 use App\Models\Project;
@@ -274,6 +275,28 @@ class NotificationService
                 previous: $e
             );
         }
+    }
+
+    /**
+     * Create notification - new task message
+     */
+    public function newTaskMessage(
+        User $receiver,
+        Task $task,
+        User $sender
+    ): Notification {
+        return Notification::create([
+            'user_id' => $receiver->id,
+            'type' => NotificationType::TASK_MESSAGE,
+            'notifiable_type' => Task::class,
+            'notifiable_id' => $task->id,
+            'data' => [
+                'sender_name' => $sender->name,
+                'sender_id' => $sender->id,
+                'task_title' => $task->title,
+                'message' => "{$sender->name} sent a message in task: {$task->title}",
+            ]
+        ]);
     }
 
     /**

@@ -41,10 +41,8 @@ class TaskResource extends JsonResource
                 'avatar' => $this->assignee->avatar ?? null,
             ] : null,
             'task_in_progress' => $this->isTaskInProgress(),
-            'activities' => $this->when(
-                $this->relationLoaded('activities'),
-                fn() => TaskActivityResource::collection($this->activities)
-            ),
+            'activities' => TaskActivityResource::collection($this->whenLoaded('activities')),
+            'messages' => MessageResource::collection($this->whenLoaded('messages')),
             'is_creator' => $this->isCreator($request->user()),
             'is_assignee' => $this->isAssignee($request->user()),
             'created_at' => $this->created_at->toIso8601String(),

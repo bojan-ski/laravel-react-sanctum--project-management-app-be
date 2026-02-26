@@ -13,7 +13,7 @@ enum NotificationType: string
     case TASK_STATUS_CHANGED = 'task_status_changed';
     case TASK_PRIORITY_CHANGED = 'task_priority_changed';
     case TASK_DELETED = 'task_deleted';
-    case COMMENT_MENTION = 'comment_mention';
+    case TASK_MESSAGE = 'task_message';
 
     public static function values(): array
     {

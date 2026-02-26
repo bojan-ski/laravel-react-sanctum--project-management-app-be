@@ -16,6 +16,7 @@ return new class extends Migration
             $table->foreignId('task_id')->constrained('tasks')->onDelete('cascade');
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->text('message');
+            $table->timestamp('read_at')->nullable();
             $table->timestamps();
 
             $table->index('task_id');
