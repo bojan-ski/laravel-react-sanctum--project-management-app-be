@@ -45,6 +45,7 @@ class TaskResource extends JsonResource
             'messages' => MessageResource::collection($this->whenLoaded('messages')),
             'is_creator' => $this->isCreator($request->user()),
             'is_assignee' => $this->isAssignee($request->user()),
+            'can_view_task' => $this->canView($request->user()),
             'created_at' => $this->created_at->toIso8601String(),
             'updated_at' => $this->updated_at->toIso8601String(),
         ];

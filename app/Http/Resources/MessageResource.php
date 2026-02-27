@@ -25,6 +25,7 @@ class MessageResource extends JsonResource
             ],
             'read_at' => $this->read_at?->toIso8601String(),
             'is_read' => $this->isRead(),
+            'is_author' => $this->isAuthor($request->user()),
             'created_at' => $this->created_at->toIso8601String(),
             'updated_at' => $this->updated_at->toIso8601String(),
         ];

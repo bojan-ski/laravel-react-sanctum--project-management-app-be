@@ -6,6 +6,7 @@ use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 use App\Traits\ApiResponse;
+use App\Enums\UserRole;
 
 class IsAdminUserMiddleware
 {
@@ -18,9 +19,10 @@ class IsAdminUserMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if ($request->user() && $request->user()->role !== 'admin') {
-            return $this->error('Unauthorized', 403);
-        }
+        $user = $request->user();
+
+        if (!$user) return $this->error(message: 'Unauthorized', statusCode: 401);
+        if ($user->role !== UserRole::ADMIN) return $this->error(message: 'Forbidden', statusCode: 403);
 
         return $next($request);
     }

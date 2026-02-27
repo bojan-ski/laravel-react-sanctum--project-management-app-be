@@ -25,7 +25,7 @@ class IsProjectMemberMiddleware
         if (!$user) return $this->error(message: 'Unauthorized', statusCode: 401);
         if (!$project) return $this->error(message: 'Not Found', statusCode: 404);
 
-        if (!$project->isMember($user)) {
+        if (!$project->isMember($user) && !$user->isAdmin()) {
             throw ProjectException::notMember(
                 userId: $user->id,
                 projectId: $project->id,

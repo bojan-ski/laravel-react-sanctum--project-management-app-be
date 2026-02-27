@@ -73,6 +73,6 @@ class UserController extends Controller
     {
         $this->userService->deleteUser($user);
 
-        return $this->success(null, 'User deleted');
+        return $this->success('User deleted');
     }
 }

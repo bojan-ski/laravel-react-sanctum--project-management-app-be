@@ -35,7 +35,7 @@ Route::middleware([
             ->name('tasks.status.update');
         Route::put('/{task}/priority', [TaskController::class, 'updatePriority'])
             ->name('tasks.priority.update');
-        Route::delete('/{task}', [TaskController::class, 'destroy'])
+        Route::delete('/{task}/destroy', [TaskController::class, 'destroy'])
             ->name('tasks.destroy');
     });
 });

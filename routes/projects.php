@@ -10,7 +10,7 @@ Route::middleware('auth:sanctum')->prefix('projects')->group(function () {
     Route::get('/', [ProjectController::class, 'index'])
         ->name('projects.index');
     Route::middleware(IsRegularUserMiddleware::class)->group(function () {
-        Route::post('/', [ProjectController::class, 'store'])
+        Route::post('/store', [ProjectController::class, 'store'])
             ->name('projects.store');
 
         Route::middleware(IsProjectOwnerMiddleware::class)->group(function () {

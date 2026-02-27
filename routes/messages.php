@@ -12,8 +12,8 @@ Route::middleware([
         ->name('messages.index');
     Route::post('/store', [MessageController::class, 'store'])
         ->name('messages.store');
-    Route::post('/mark_as_read', [MessageController::class, 'markAsRead'])
+    Route::post('/read', [MessageController::class, 'markAsRead'])
         ->name('messages.read');
-    Route::delete('/{message}', [MessageController::class, 'destroy'])
+    Route::delete('/{message}/destroy', [MessageController::class, 'destroy'])
         ->name('messages.destroy');
 });

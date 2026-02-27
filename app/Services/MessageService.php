@@ -32,11 +32,13 @@ class MessageService
         string $message
     ): ?Message {
         try {
-            return Message::create([
+            $newMessage = Message::create([
                 'task_id' => $task->id,
                 'user_id' => $messageSender->id,
                 'message' => $message,
             ]);
+
+            return $newMessage->load('user');
         } catch (\Throwable $e) {
             throw MessageException::createMessageFailed($task->id, $messageSender->id, $e);
         }
@@ -48,9 +50,9 @@ class MessageService
     public function markMessagesAsRead(
         Task $task,
         User $user
-    ): void {
+    ): int {
         try {
-            $task->messages()
+            return $task->messages()
                 ->where('user_id', '!=', $user->id)
                 ->whereNull('read_at')
                 ->update(['read_at' => now()]);

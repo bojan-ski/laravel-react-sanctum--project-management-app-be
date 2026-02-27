@@ -99,7 +99,7 @@ class MessageException extends Exception
             taskId: $taskId,
             message: 'Can not find task!',
             type: self::TYPE_CAN_NOT_FIND_TASK,
-            statusCode: 403,
+            statusCode: 404,
             logLevel: 'warning',
         );
     }

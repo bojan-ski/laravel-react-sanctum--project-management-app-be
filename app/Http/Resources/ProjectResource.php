@@ -35,6 +35,7 @@ class ProjectResource extends JsonResource
                 'is_owner' => $this->isOwner($member),
                 'joined_at' => $member->pivot->joined_at ?? null,
             ]),
+            'is_member' => $this->isMember($request->user()),
             'members_limit' => ProjectMemberService::MAX_MEMBERS_PER_PROJECT,
             'tasks' => $this->when(
                 $this->relationLoaded('tasks'),
