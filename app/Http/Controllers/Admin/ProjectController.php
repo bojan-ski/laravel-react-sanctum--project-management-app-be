@@ -34,4 +34,17 @@ class ProjectController extends Controller
             data: $projects
         );
     }
+
+    /**
+     * Get app project statistics.
+     */
+    public function stats(): JsonResponse
+    {
+        $stats = $this->projectService->getStats();
+
+        return $this->success(
+            message: 'Project statistics retrieved',
+            data: $stats,
+        );
+    }
 }

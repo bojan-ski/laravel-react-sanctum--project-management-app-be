@@ -22,4 +22,6 @@ Route::middleware([
         // projects routes
         Route::get('/projects', [ProjectController::class, 'index'])
             ->name('admin.projects.index');
+        Route::get('/projects/stats', [ProjectController::class, 'stats'])
+            ->name('admin.projects.stats');
     });
