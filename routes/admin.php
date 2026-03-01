@@ -16,6 +16,8 @@ Route::middleware([
             ->name('admin.users.index');
         Route::post('/users', [UserController::class, 'store'])
             ->name('admin.users.store');
+        Route::get('/users/{user}', [UserController::class, 'show'])
+            ->name('admin.users.show');
         Route::delete('/users/{user}', [UserController::class, 'destroy'])
             ->name('admin.users.destroy');
 

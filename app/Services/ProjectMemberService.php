@@ -124,7 +124,7 @@ class ProjectMemberService
 
                     if ($invitee) {
                         $this->checkUserBeforeInvite($project, $invitee);
-                        $this->mailService->sendInvitationEmail($invitee, $project, $inviter);
+                        $this->mailService->sendProjectInvitationEmail($invitee, $project, $inviter);
                         $invitees[] = $invitee;
                     }
                 }

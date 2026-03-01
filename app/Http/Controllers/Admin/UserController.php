@@ -2,30 +2,41 @@
 
 namespace App\Http\Controllers\Admin;
 
-use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
+use App\Http\Requests\Admin\SearchRequest;
 use App\Http\Requests\Admin\CreateUserRequest;
-use App\Models\User;
-use App\Services\UserService;
+use App\Exceptions\UserException;
+use App\Http\Resources\UserResource;
+use App\Http\Resources\Admin\UserDetailResource;
+use App\Services\Admin\UserService;
 use App\Traits\ApiResponse;
+use App\Models\User;
 
 class UserController extends Controller
 {
     use ApiResponse;
 
-    public function __construct(private UserService $userService) {}
+    public function __construct(protected readonly UserService $userService) {}
 
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $request): JsonResponse
+    public function index(SearchRequest $request): JsonResponse
     {
-        $search = $request->input('search');
+        $users = $this->userService->getAllUsers(
+            search: $request->validated('search') ?? null,
+            perPage: 12
+        );
 
-        $users = $this->userService->getAllUsers($search);
+        $users->setCollection(
+            UserResource::collection($users)->collection
+        );
 
-        return $this->success($users, 'All user retrieved');
+        return $this->success(
+            message: 'All user retrieved',
+            data: $users
+        );
     }
 
     /**
@@ -33,37 +44,34 @@ class UserController extends Controller
      */
     public function store(CreateUserRequest $request): JsonResponse
     {
-        $user = $this->userService->createUser($request->validated());
+        try {
+            $user = $this->userService->createUser($request->validated());
 
-        if ($user) {
-            return $this->success($user, 'New user created', 201);
+            return $this->success(
+                message: 'New user created',
+                data: $user,
+                statusCode: 201
+            );
+        } catch (UserException $e) {
+            $e->report();
+            return $this->error(
+                message: $e->getMessage(),
+                statusCode: $e->getStatusCode()
+            );
         }
-
-        return $this->error('Create new user error!', 500);
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(User $user): JsonResponse
     {
-        //
-    }
+        $user = $this->userService->getUserDetails($user);
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
+        return $this->success(
+            message: 'User details retrieved',
+            data: new UserDetailResource($user)
+        );
     }
 
     /**
@@ -71,8 +79,21 @@ class UserController extends Controller
      */
     public function destroy(User $user): JsonResponse
     {
-        $this->userService->deleteUser($user);
+        try {
+            $this->userService->deleteUser($user);
 
-        return $this->success('User deleted');
+            return $this->success(
+                message: 'User deleted',
+                data: [
+                    'id' => $user->id
+                ]
+            );
+        } catch (UserException $e) {
+            $e->report();
+            return $this->error(
+                message: $e->getMessage(),
+                statusCode: $e->getStatusCode()
+            );
+        }
     }
 }
