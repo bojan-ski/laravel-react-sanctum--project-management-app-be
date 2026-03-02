@@ -77,6 +77,15 @@ class User extends Authenticatable
         return $this->hasMany(Project::class, 'owner_id');
     }
 
+    // member of projects
+    public function memberProjects(): BelongsToMany
+    {
+        return $this->belongsToMany(Project::class, 'project_members', 'member_id', 'project_id')
+            ->where(function ($query) {
+                $query->whereColumn('projects.owner_id', '!=', 'project_members.member_id');
+            });
+    }
+
     // projects user is a member of and owns
     public function projects(): BelongsToMany
     {

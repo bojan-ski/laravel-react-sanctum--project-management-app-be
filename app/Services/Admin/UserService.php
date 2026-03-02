@@ -56,17 +56,13 @@ class UserService
         return $user;
     }
 
-     /**
+    /**
      * Get single user details.
      */
     public function getUserDetails(User $user): User
     {
         return $user->loadCount(['ownedProjects', 'memberProjects'])
-            ->load([
-                'ownedProjects' => function ($query) {
-                    $query->latest()->take(3);
-                },
-            ]);
+            ->load(['projects']);
     }
 
     /**
