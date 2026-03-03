@@ -15,7 +15,7 @@ use App\Models\Notification;
 class ProjectMemberService
 {
     public function __construct(
-        protected readonly NotificationService $notificationService,
+        protected readonly NotificationCreationService $notificationCreationService,
         protected readonly MailService $mailService,
     ) {}
 
@@ -139,7 +139,7 @@ class ProjectMemberService
         }
 
         foreach ($invitees as $invitee) {
-            $this->notificationService->projectInvitation($invitee, $project, $inviter);
+            $this->notificationCreationService->projectInvitation($invitee, $project, $inviter);
         }
     }
 
@@ -175,24 +175,12 @@ class ProjectMemberService
         $members = $project->members()->where('member_id', '!=', $formerMember->id)->get();
 
         foreach ($members as $member) {
-            $this->notificationService->memberLeft(
+            $this->notificationCreationService->memberLeft(
                 receiver: $member,
                 project: $project,
                 sender: $formerMember
             );
         }
-
-        // $members = $project->members()->get();
-
-        // foreach ($members as $member) {
-        //     if ($member->id !== $formerMember->id) {
-        //         $this->notificationService->memberLeft(
-        //             receiver: $member,
-        //             project: $project,
-        //             sender: $formerMember
-        //         );
-        //     }
-        // }
     }
 
     /**
@@ -247,7 +235,7 @@ class ProjectMemberService
             );
         }
 
-        $this->notificationService->removedFromProject(
+        $this->notificationCreationService->removedFromProject(
             receiver: $member,
             project: $project,
             sender: $project->owner

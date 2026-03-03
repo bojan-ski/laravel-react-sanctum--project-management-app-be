@@ -242,7 +242,10 @@ class TaskController extends Controller
                 file: $request->validated('document')
             );
 
-            return $this->success(message: 'Document uploaded');
+            return $this->success(
+                message: 'Document uploaded',
+                statusCode: 201
+            );
         } catch (TaskActivityException $e) {
             $e->report();
             return $this->error(

@@ -6,21 +6,20 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\UploadedFile;
 use App\Exceptions\TaskException;
-use App\Exceptions\TaskActivityException;
-use App\Enums\TaskStatus;
-use App\Enums\TaskActivityAction;
 use App\Exceptions\DocumentException;
 use App\Exceptions\NotificationException;
+use App\Enums\TaskStatus;
+use App\Enums\TaskActivityAction;
 use App\Models\User;
 use App\Models\Project;
 use App\Models\Task;
-use App\Models\TaskActivity;
 
 class TaskService
 {
     public function __construct(
-        protected readonly NotificationService $notificationService,
+        protected readonly NotificationCreationService $notificationCreationService,
         protected readonly DocumentService $documentService,
+        protected readonly TaskActivityService $taskActivityService,
     ) {}
 
     /**
@@ -87,7 +86,7 @@ class TaskService
                 'due_date' => $formData['due_date'],
             ]);
 
-            $this->notificationService->taskAssigned(
+            $this->notificationCreationService->taskAssigned(
                 receiver: $task->assignee,
                 project: $project,
                 task: $task,
@@ -117,27 +116,6 @@ class TaskService
     }
 
     /**
-     * Log task activity
-     */
-    private function logActivity(
-        int $taskId,
-        int $userId,
-        TaskActivityAction $action,
-        array | string $changes
-    ): TaskActivity {
-        try {
-            return TaskActivity::create([
-                'task_id' => $taskId,
-                'user_id' => $userId,
-                'action' => $action,
-                'changes' => $changes,
-            ]);
-        } catch (\Throwable $e) {
-            throw TaskActivityException::logTaskActivityFailed($userId, $taskId, $action, $e);
-        }
-    }
-
-    /**
      * Update task status
      */
     public function statusChange(
@@ -154,14 +132,14 @@ class TaskService
             throw TaskException::changeTaskStatusFailed($task->created_by, $task->id);
         }
 
-        $this->logActivity(
+        $this->taskActivityService->logTaskActivity(
             taskId: $task->id,
             userId: $task->created_by,
             action: TaskActivityAction::STATUS_CHANGED,
             changes: ['from' => $oldStatus, 'to' => $newStatus]
         );
 
-        $this->notificationService->taskStatusChanged(
+        $this->notificationCreationService->taskStatusChanged(
             receiver: $task->assignee,
             task: $task,
             sender: $task->creator
@@ -187,14 +165,14 @@ class TaskService
             throw TaskException::changeTaskPriorityFailed($task->created_by, $task->id);
         }
 
-        $this->logActivity(
+        $this->taskActivityService->logTaskActivity(
             taskId: $task->id,
             userId: $task->created_by,
             action: TaskActivityAction::PRIORITY_CHANGED,
             changes: ['from' => $oldPriority, 'to' => $newPriority]
         );
 
-        $this->notificationService->taskPriorityChanged(
+        $this->notificationCreationService->taskPriorityChanged(
             receiver: $task->assignee,
             task: $task,
             sender: $task->creator
@@ -212,7 +190,7 @@ class TaskService
             DB::transaction(function () use ($task) {
                 $this->documentService->deleteDocumentDirectory($task);
 
-                $this->notificationService->taskDeleted(
+                $this->notificationCreationService->taskDeleted(
                     receiver: $task->assignee,
                     task: $task,
                     sender: $task->creator
@@ -237,7 +215,7 @@ class TaskService
         Task $task,
         UploadedFile $file
     ): void {
-        $activity = $this->logActivity(
+        $activity = $this->taskActivityService->logTaskActivity(
             taskId: $task->id,
             userId: $uploader->id,
             action: TaskActivityAction::DOCUMENT_UPLOADED,

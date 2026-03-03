@@ -2,8 +2,8 @@
 
 namespace App\Traits;
 
-use App\Models\Document;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
+use App\Models\Document;
 
 trait HasDocument
 {

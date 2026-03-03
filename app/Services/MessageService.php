@@ -10,8 +10,6 @@ use App\Models\User;
 
 class MessageService
 {
-    public function __construct(protected readonly NotificationService $notificationService) {}
-
     /**
      * Get all task messages
      */
@@ -30,7 +28,7 @@ class MessageService
         Task $task,
         User $messageSender,
         string $message
-    ): ?Message {
+    ): Message {
         try {
             $newMessage = Message::create([
                 'task_id' => $task->id,

@@ -5,12 +5,12 @@ namespace App\Services;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
 use Intervention\Image\ImageManager;
 use Intervention\Image\Drivers\Gd\Driver;
 use App\Exceptions\AvatarException;
 use App\Models\Avatar;
 use App\Models\User;
-use Illuminate\Support\Facades\DB;
 
 class AvatarService
 {

@@ -57,7 +57,8 @@ class ProjectMemberController extends Controller
                 message: $message,
                 data: [
                     'user_ids' => $request->user_ids
-                ]
+                ],
+                statusCode: 201
             );
         } catch (ProjectMemberException $e) {
             $e->report();

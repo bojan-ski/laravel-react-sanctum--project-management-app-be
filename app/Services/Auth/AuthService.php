@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\Auth;
 
 use Illuminate\Support\Facades\Auth;
 use App\Exceptions\AuthException;
@@ -11,7 +11,7 @@ class AuthService
     /**
      * login user
      */
-    public function login(array $formData): ?User
+    public function login(array $formData): User
     {
         if (!Auth::attempt($formData)) {
             throw AuthException::invalidCredentials($formData['email']);

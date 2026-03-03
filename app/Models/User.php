@@ -53,31 +53,26 @@ class User extends Authenticatable
         ];
     }
 
-    // check if user is an administrator
     public function isAdmin(): bool
     {
         return $this->role === UserRole::ADMIN;
     }
 
-    // check if user is a regular user
     public function isUser(): bool
     {
         return $this->role === UserRole::USER;
     }
 
-    // get user avatar
     public function avatar(): HasOne
     {
         return $this->hasOne(Avatar::class);
     }
 
-    // user owned projects
     public function ownedProjects(): HasMany
     {
         return $this->hasMany(Project::class, 'owner_id');
     }
 
-    // member of projects
     public function memberProjects(): BelongsToMany
     {
         return $this->belongsToMany(Project::class, 'project_members', 'member_id', 'project_id')
@@ -86,25 +81,21 @@ class User extends Authenticatable
             });
     }
 
-    // projects user is a member of and owns
     public function projects(): BelongsToMany
     {
         return $this->belongsToMany(Project::class, 'project_members', 'member_id', 'project_id');
     }
 
-    // get tasks created by user
     public function createdTasks(): HasMany
     {
         return $this->hasMany(Task::class, 'created_by');
     }
 
-    // get assigned tasks
     public function assignedTasks(): HasMany
     {
         return $this->hasMany(Task::class, 'assigned_to');
     }
 
-    // user notifications
     public function notifications(): HasMany
     {
         return $this->hasMany(Notification::class);

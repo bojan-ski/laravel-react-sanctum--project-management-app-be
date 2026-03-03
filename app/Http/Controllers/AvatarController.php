@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\JsonResponse;
 use App\Http\Requests\Profile\AvatarRequest;
-use App\Http\Resources\UserResource;
 use App\Exceptions\AvatarException;
 use App\Services\AvatarService;
 use App\Traits\ApiResponse;
@@ -20,13 +19,10 @@ class AvatarController extends Controller
      */
     public function updateUserAvatar(AvatarRequest $request): JsonResponse
     {
-        $user = $request->user();
-        $avatar = $request->validated('avatar');
-
         try {
             $this->avatarService->processUserAvatar(
-                $user,
-                $avatar
+                user: $request->user(),
+                avatar: $request->validated('avatar')
             );
 
             return $this->success(message: 'Avatar updated');

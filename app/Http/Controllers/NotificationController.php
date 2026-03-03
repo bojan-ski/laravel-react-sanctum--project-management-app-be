@@ -7,6 +7,7 @@ use Illuminate\Http\JsonResponse;
 use App\Http\Resources\NotificationResource;
 use App\Exceptions\NotificationException;
 use App\Services\NotificationService;
+use App\Services\InvitationService;
 use App\Traits\ApiResponse;
 use App\Models\Notification;
 
@@ -14,7 +15,10 @@ class NotificationController extends Controller
 {
     use ApiResponse;
 
-    public function __construct(protected readonly NotificationService $notificationService) {}
+    public function __construct(
+        protected readonly NotificationService $notificationService,
+        protected readonly InvitationService $InvitationService
+    ) {}
 
     /**
      * Get user's notifications
@@ -98,10 +102,10 @@ class NotificationController extends Controller
         Notification $notification,
         Request $request
     ): JsonResponse {
-        $this->notificationService->validateInvitation($notification);
+        $this->InvitationService->validateInvitation($notification);
 
         try {
-            $updatedNotification = $this->notificationService->acceptInvitation(
+            $updatedNotification = $this->InvitationService->acceptInvitation(
                 notification: $notification,
                 user: $request->user()
             );
@@ -126,10 +130,10 @@ class NotificationController extends Controller
         Request $request,
         Notification $notification
     ): JsonResponse {
-        $this->notificationService->validateInvitation($notification);
+        $this->InvitationService->validateInvitation($notification);
 
         try {
-            $updatedNotification = $this->notificationService->declineInvitation(
+            $updatedNotification = $this->InvitationService->declineInvitation(
                 notification: $notification,
                 user: $request->user()
             );

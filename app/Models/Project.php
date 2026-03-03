@@ -31,7 +31,6 @@ class Project extends Model
         'deadline' => 'date'
     ];
 
-    //  add user id (owner_id) on new project create 
     protected static function boot(): void
     {
         parent::boot();
@@ -41,13 +40,11 @@ class Project extends Model
         });
     }
 
-    // get project owner
     public function owner(): BelongsTo
     {
         return $this->belongsTo(User::class, 'owner_id');
     }
 
-    // get project members (including owner)
     public function members(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'project_members', 'project_id', 'member_id')
@@ -55,19 +52,16 @@ class Project extends Model
             ->withPivot('joined_at');
     }
 
-    // check if user is owner of project
     public function isOwner(User $user): bool
     {
         return $this->owner_id === $user->id;
     }
 
-    // check if user is member of project (including owner)
     public function isMember(User $user): bool
     {
         return $this->members()->where('member_id', $user->id)->exists();
     }
 
-    // get project tasks
     public function tasks(): HasMany
     {
         return $this->hasMany(Task::class);
@@ -78,7 +72,6 @@ class Project extends Model
         return $this->status === ProjectStatus::ACTIVE;
     }
 
-    // get project statistics
     public function getStatistics(): array
     {
         $total = $this->tasks_count ?? $this->tasks()->count();

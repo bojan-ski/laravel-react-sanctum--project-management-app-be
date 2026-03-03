@@ -5,10 +5,10 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\JsonResponse;
+use App\Http\Resources\Auth\AuthResource;
 use App\Http\Requests\Auth\LoginRequest;
-use App\Http\Resources\AuthResource;
 use App\Exceptions\AuthException;
-use App\Services\AuthService;
+use App\Services\Auth\AuthService;
 use App\Traits\ApiResponse;
 
 class AuthController extends Controller

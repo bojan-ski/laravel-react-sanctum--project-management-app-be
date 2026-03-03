@@ -29,19 +29,16 @@ class Notification extends Model
         'read_at' => 'datetime',
     ];
 
-    // user notifications
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    // get the notifiable entity
     public function notifiable(): MorphTo
     {
         return $this->morphTo();
     }
 
-    // mark notification as read
     public function markAsRead(): void
     {
         if (!$this->read_at) {
@@ -49,37 +46,31 @@ class Notification extends Model
         }
     }
 
-    // is notification read
     public function isRead(): bool
     {
         return $this->read_at !== null;
     }
 
-    // is notification unread
     public function isUnread(): bool
     {
         return $this->read_at === null;
     }
 
-    // is invitation
     public function isInvitation(): bool
     {
         return $this->type === NotificationType::INVITATION;
     }
 
-    // is invitation pending
     public function isPending(): bool
     {
         return $this->isInvitation() && $this->action_taken === null;
     }
 
-    // get unread notifications
     public function scopeUnread($query)
     {
         return $query->whereNull('read_at');
     }
 
-    // get pending invitations
     public function scopePendingInvitations($query)
     {
         return $query->where('type', NotificationType::INVITATION)

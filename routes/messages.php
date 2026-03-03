@@ -7,13 +7,15 @@ use App\Http\Controllers\MessageController;
 Route::middleware([
     'auth:sanctum',
     IsTaskCreatorOrAssigneeMiddleware::class
-])->prefix('tasks/{task}/messages')->group(function () {
-    Route::get('/', [MessageController::class, 'index'])
-        ->name('messages.index');
-    Route::post('/store', [MessageController::class, 'store'])
-        ->name('messages.store');
-    Route::post('/read', [MessageController::class, 'markAsRead'])
-        ->name('messages.read');
-    Route::delete('/{message}/destroy', [MessageController::class, 'destroy'])
-        ->name('messages.destroy');
-});
+])
+    ->prefix('tasks/{task}/messages')
+    ->group(function () {
+        Route::get('/', [MessageController::class, 'index'])
+            ->name('messages.index');
+        Route::post('/', [MessageController::class, 'store'])
+            ->name('messages.store');
+        Route::post('/read', [MessageController::class, 'markAsRead'])
+            ->name('messages.read');
+        Route::delete('/{message}', [MessageController::class, 'destroy'])
+            ->name('messages.destroy');
+    });

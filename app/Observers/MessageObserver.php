@@ -2,15 +2,15 @@
 
 namespace App\Observers;
 
+use Pusher\Pusher;
 use App\Events\MessageDeleted;
 use App\Events\MessageSent;
-use App\Services\NotificationService;
+use App\Services\NotificationCreationService;
 use App\Models\Message;
-use Pusher\Pusher;
 
 class MessageObserver
 {
-    public function __construct(protected readonly NotificationService $notificationService) {}
+    public function __construct(protected readonly NotificationCreationService $notificationCreationService) {}
 
     /**
      * Check if user is present on task channel.
@@ -49,7 +49,7 @@ class MessageObserver
         if (!$receiver) return;
 
         if (!$this->isUserPresentOnTask($task->id, $receiver->id)) {
-            $this->notificationService->newTaskMessage(
+            $this->notificationCreationService->newTaskMessage(
                 receiver: $receiver,
                 task: $task,
                 sender: $sender

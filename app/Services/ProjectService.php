@@ -16,7 +16,7 @@ use App\Models\Task;
 class ProjectService
 {
     public function __construct(
-        protected readonly NotificationService $notificationService,
+        protected readonly NotificationCreationService $notificationCreationService,
         protected readonly DocumentService $documentService,
     ) {}
 
@@ -119,14 +119,14 @@ class ProjectService
     /**
      * Notify project members of update
      */
-    private function notifyMembersOfUpdate(
+    private function notifyMembersOfProjectUpdate(
         Project $project,
         User $owner
     ): void {
         $members = $project->members()->where('member_id', '!=', $owner->id)->get();
 
         foreach ($members as $member) {
-            $this->notificationService->projectUpdated(
+            $this->notificationCreationService->projectUpdated(
                 receiver: $member,
                 project: $project,
                 sender: $owner
@@ -164,7 +164,7 @@ class ProjectService
             throw ProjectException::updateProjectFailed($project->id, $e);
         }
 
-        $this->notifyMembersOfUpdate($project, $project->owner);
+        $this->notifyMembersOfProjectUpdate($project, $project->owner);
 
         return $project->fresh();
     }
@@ -175,7 +175,7 @@ class ProjectService
     public function statusChange(
         Project $project,
         string $status,
-    ): ?Project {
+    ): Project {
         try {
             $project->update([
                 'status' => $status
@@ -184,7 +184,7 @@ class ProjectService
             throw ProjectException::changeProjectStatusFailed($project->id);
         }
 
-        $this->notifyMembersOfUpdate($project, $project->owner);
+        $this->notifyMembersOfProjectUpdate($project, $project->owner);
 
         return $project->fresh();
     }
@@ -192,14 +192,14 @@ class ProjectService
     /**
      * Notify project members of project deletion
      */
-    private function notifyMembersOfDeletion(
+    private function notifyMembersOfProjectDeletion(
         Project $project,
         User $owner
     ): void {
         $members = $project->members()->where('member_id', '!=', $owner->id)->get();
 
         foreach ($members as $member) {
-            $this->notificationService->projectDeleted(
+            $this->notificationCreationService->projectDeleted(
                 receiver: $member,
                 project: $project,
                 sender: $owner
@@ -220,7 +220,7 @@ class ProjectService
                     $this->documentService->deleteDocumentDirectory($task);
                 });
 
-                $this->notifyMembersOfDeletion($project, $project->owner);
+                $this->notifyMembersOfProjectDeletion($project, $project->owner);
 
                 $project->delete();
             });

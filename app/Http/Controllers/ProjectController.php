@@ -61,7 +61,10 @@ class ProjectController extends Controller
                 file: $request->file('document') ?? null
             );
 
-            return $this->success(message: 'Project created');
+            return $this->success(
+                message: 'Project created',
+                statusCode: 201
+            );
         } catch (ProjectException $e) {
             $e->report();
             return $this->error(

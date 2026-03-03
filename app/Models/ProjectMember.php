@@ -19,19 +19,16 @@ class ProjectMember extends Pivot
         'joined_at' => 'datetime',
     ];
 
-    // relation to a project
     public function project(): BelongsTo
     {
         return $this->belongsTo(Project::class);
     }
 
-    // get the member (user)
     private function member(): BelongsTo
     {
         return $this->belongsTo(User::class, 'member_id');
     }
 
-    // relation to a user
     public function user(): BelongsTo
     {
         return $this->member();

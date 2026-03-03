@@ -2,8 +2,8 @@
 
 namespace App\Services\Admin;
 
-use App\Enums\ProjectStatus;
 use Illuminate\Pagination\LengthAwarePaginator;
+use App\Enums\ProjectStatus;
 use App\Enums\TaskStatus;
 use App\Models\Project;
 
