@@ -21,6 +21,7 @@ class ProjectResource extends JsonResource
             'description' => $this->description,
             'status' => $this->status,
             'deadline' => $this->deadline?->format('Y-m-d'),
+            'is_overdue' => $this->isOverdue(),
             'document' => $this->document ? new DocumentResource($this->document) : null,
             'owner' => [
                 'name' => $this->owner->name,

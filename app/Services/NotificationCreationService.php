@@ -26,8 +26,7 @@ class NotificationCreationService
                 'notifiable_type' => Project::class,
                 'notifiable_id' => $project->id,
                 'data' => [
-                    'inviter_name' => $inviter->name,
-                    'inviter_id' => $inviter->id,
+                    'sender_name' => $inviter->name,
                     'message' => "{$inviter->name} invited you to join project: {$project->title}",
                 ]
             ]);
@@ -56,7 +55,6 @@ class NotificationCreationService
                 'notifiable_id' => $project->id,
                 'data' => [
                     'sender_name' => $sender->name,
-                    'sender_id' => $sender->id,
                     'message' => "{$sender->name} has left the project: {$project->title}",
                 ]
             ]);
@@ -85,7 +83,6 @@ class NotificationCreationService
                 'notifiable_id' => $project->id,
                 'data' => [
                     'sender_name' => $sender->name,
-                    'sender_id' => $sender->id,
                     'message' => "{$sender->name} removed you from project: {$project->title}",
                 ]
             ]);
@@ -114,7 +111,6 @@ class NotificationCreationService
                 'notifiable_id' => $project->id,
                 'data' => [
                     'sender_name' => $sender->name,
-                    'sender_id' => $sender->id,
                     'message' => "{$sender->name} has updated the project: {$project->title}",
                 ]
             ]);
@@ -143,7 +139,6 @@ class NotificationCreationService
                 'notifiable_id' => $project->id,
                 'data' => [
                     'sender_name' => $sender->name,
-                    'sender_id' => $sender->id,
                     'message' => "{$sender->name} deleted the project: {$project->title}",
                 ]
             ]);
@@ -173,7 +168,6 @@ class NotificationCreationService
                 'notifiable_id' => $task->id,
                 'data' => [
                     'sender_name' => $sender->name,
-                    'sender_id' => $sender->id,
                     'message' => "{$sender->name} assigned you a task {$task->title}, in project: {$project->title}",
                 ]
             ]);
@@ -202,7 +196,6 @@ class NotificationCreationService
                 'notifiable_id' => $task->id,
                 'data' => [
                     'sender_name' => $sender->name,
-                    'sender_id' => $sender->id,
                     'message' => "{$sender->name} changed the status of the task:{$task->title}",
                 ]
             ]);
@@ -231,7 +224,6 @@ class NotificationCreationService
                 'notifiable_id' => $task->id,
                 'data' => [
                     'sender_name' => $sender->name,
-                    'sender_id' => $sender->id,
                     'message' => "{$sender->name} changed the priority of the task:{$task->title}",
                 ]
             ]);
@@ -260,7 +252,6 @@ class NotificationCreationService
                 'notifiable_id' => $task->id,
                 'data' => [
                     'sender_name' => $sender->name,
-                    'sender_id' => $sender->id,
                     'message' => "{$sender->name} deleted the task:{$task->title}",
                 ]
             ]);
@@ -288,8 +279,6 @@ class NotificationCreationService
             'notifiable_id' => $task->id,
             'data' => [
                 'sender_name' => $sender->name,
-                'sender_id' => $sender->id,
-                'task_title' => $task->title,
                 'message' => "{$sender->name} sent a message in task: {$task->title}",
             ]
         ]);

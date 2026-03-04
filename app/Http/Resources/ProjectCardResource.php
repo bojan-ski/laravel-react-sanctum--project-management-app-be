@@ -34,6 +34,7 @@ class ProjectCardResource extends JsonResource
             'description' => $this->truncateDescription($this->description, 300),
             'status' => $this->status,
             'deadline' => $this->deadline?->format('Y-m-d'),
+            'is_overdue' => $this->isOverdue(),
             'is_owner' => $this->isOwner($request->user()),
             'owner' => [
                 'name' => $this->owner->name,

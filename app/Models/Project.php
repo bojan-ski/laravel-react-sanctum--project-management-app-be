@@ -72,6 +72,13 @@ class Project extends Model
         return $this->status === ProjectStatus::ACTIVE;
     }
 
+    public function isOverdue(): bool
+    {
+        return $this->due_date &&
+            $this->due_date->isPast() &&
+            $this->status === ProjectStatus::ACTIVE;
+    }
+
     public function getStatistics(): array
     {
         $total = $this->tasks_count ?? $this->tasks()->count();
