@@ -15,7 +15,7 @@ Broadcast::channel('task.{taskId}', function ($user, $taskId) {
     }
 
     return [
-        'id' => $user->id,
-        'name' => $user->name,
+        'id' => (int) $user->id,
+        'name' => (string) $user->name,
     ];
 });

@@ -15,8 +15,10 @@ class MessageObserver
     /**
      * Check if user is present on task channel.
      */
-    private function isUserPresentOnTask(int $taskId, int $userId): bool
-    {
+    private function isUserPresentOnTask(
+        int $taskId,
+        int $userId
+    ): bool {
         try {
             $pusher = new Pusher(
                 config('broadcasting.connections.pusher.key'),
@@ -25,12 +27,17 @@ class MessageObserver
                 ['cluster' => config('broadcasting.connections.pusher.options.cluster')]
             );
 
-            $channelName = "private-task.{$taskId}";
+            $channelName = "presence-task.{$taskId}";
             $response = $pusher->getPresenceUsers($channelName);
 
-            $userIds = array_column($response->users ?? [], 'id');
+            $userIds = array_map(
+                fn($user) => (int) $user->id,
+                $response->users ?? []
+            );
 
-            return in_array($userId, $userIds);
+            $isPresent = in_array($userId, $userIds);
+
+            return $isPresent;
         } catch (\Throwable $e) {
             return false;
         }
