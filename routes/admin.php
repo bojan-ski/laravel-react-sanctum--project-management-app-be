@@ -11,19 +11,23 @@ Route::middleware([
 ])
     ->prefix('admin')
     ->group(function () {
-        // users routes
-        Route::get('/users', [UserController::class, 'index'])
-            ->name('admin.users.index');
-        Route::post('/users', [UserController::class, 'store'])
-            ->name('admin.users.store');
-        Route::get('/users/{user}', [UserController::class, 'show'])
-            ->name('admin.users.show');
-        Route::delete('/users/{user}', [UserController::class, 'destroy'])
-            ->name('admin.users.destroy');
+        Route::prefix('users')
+            ->group(function () {
+                Route::get('/', [UserController::class, 'index'])
+                    ->name('admin.users.index');
+                Route::post('/', [UserController::class, 'store'])
+                    ->name('admin.users.store');
+                Route::get('/{user}', [UserController::class, 'show'])
+                    ->name('admin.users.show');
+                Route::delete('/{user}', [UserController::class, 'destroy'])
+                    ->name('admin.users.destroy');
+            });
 
-        // projects routes
-        Route::get('/projects', [ProjectController::class, 'index'])
-            ->name('admin.projects.index');
-        Route::get('/projects/stats', [ProjectController::class, 'stats'])
-            ->name('admin.projects.stats');
+        Route::prefix('projects')
+            ->group(function () {
+                Route::get('/', [ProjectController::class, 'index'])
+                    ->name('admin.projects.index');
+                Route::get('/stats', [ProjectController::class, 'stats'])
+                    ->name('admin.projects.stats');
+            });
     });
